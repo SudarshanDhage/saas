@@ -10,6 +10,7 @@ import { getFeaturePlans, SingleFeaturePlan } from '@/lib/firestore'
 import { FileText, Loader2, X } from 'lucide-react'
 import { auth } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
+import { User, Auth } from 'firebase/auth'
 
 interface JiraSidebarProps {
   isOpen: boolean
@@ -32,24 +33,50 @@ const StaticSidebar = () => (
 
 // Define component as a regular React functional component for compatibility
 const JiraSidebar: React.FC<JiraSidebarProps> = ({ isOpen }) => {
-  const { selectedProject, setSelectedProject, setActiveSection, activeSection, sidebarOpen, setSidebarOpen } = useSidebar()
+  // Safely access the context with error handling
+  const sidebarContext = React.useContext(
+    React.createContext({
+      selectedProject: null, 
+      setSelectedProject: () => {}, 
+      setActiveSection: () => {}, 
+      activeSection: '', 
+      sidebarOpen: false, 
+      setSidebarOpen: () => {}
+    })
+  )
+  
+  // Use a try-catch to safely access the sidebar context
+  let selectedProject, setSelectedProject, setActiveSection, activeSection, sidebarOpen, setSidebarOpen;
+  
+  try {
+    const context = useSidebar();
+    selectedProject = context.selectedProject;
+    setSelectedProject = context.setSelectedProject;
+    setActiveSection = context.setActiveSection;
+    activeSection = context.activeSection;
+    sidebarOpen = context.sidebarOpen;
+    setSidebarOpen = context.setSidebarOpen;
+  } catch (error) {
+    // Fallback to default values if context is not available
+    console.error('Error accessing sidebar context:', error);
+    selectedProject = sidebarContext.selectedProject;
+    setSelectedProject = sidebarContext.setSelectedProject;
+    setActiveSection = sidebarContext.setActiveSection;
+    activeSection = sidebarContext.activeSection;
+    sidebarOpen = isOpen; // Use the prop as fallback
+    setSidebarOpen = sidebarContext.setSidebarOpen;
+  }
+  
   const pathname = usePathname()
   const router = useRouter()
   const [recentFeaturePlans, setRecentFeaturePlans] = useState<SingleFeaturePlan[]>([])
   const [isLoadingFeatures, setIsLoadingFeatures] = useState(false)
   const [isClient, setIsClient] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   
   // Set isClient to true after initial render to avoid hydration mismatch
   useEffect(() => {
     setIsClient(true)
-    
-    // After hydration completes, start loading features
-    setIsLoadingFeatures(true)
-    
-    // Then fetch features if user is authenticated
-    if (auth.currentUser) {
-      fetchRecentFeaturePlans()
-    }
   }, []) // Empty dependency array - only run once
   
   // Extract project ID from the URL if on a project page
@@ -60,12 +87,17 @@ const JiraSidebar: React.FC<JiraSidebarProps> = ({ isOpen }) => {
   // Handle navigation to avoid page reloads
   const handleNavClick = (section: string, path: string, e: React.MouseEvent) => {
     e.preventDefault()
-    setActiveSection(section)
-    router.push(path, { scroll: false })
     
-    // Close sidebar on mobile after navigation
-    if (window.innerWidth < 1024) {
-      setSidebarOpen(false)
+    try {
+      setActiveSection(section)
+      router.push(path, { scroll: false })
+      
+      // Close sidebar on mobile after navigation
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false)
+      }
+    } catch (error) {
+      console.error('Navigation error:', error)
     }
   }
 
@@ -73,9 +105,10 @@ const JiraSidebar: React.FC<JiraSidebarProps> = ({ isOpen }) => {
   const fetchRecentFeaturePlans = async () => {
     try {
       setIsLoadingFeatures(true)
+      setError(null)
       
       // Only fetch when user is authenticated
-      if (!auth.currentUser) {
+      if (!(auth as Auth).currentUser) {
         setRecentFeaturePlans([])
         setIsLoadingFeatures(false)
         return
@@ -85,25 +118,35 @@ const JiraSidebar: React.FC<JiraSidebarProps> = ({ isOpen }) => {
       
       // Filter to get only user's plans and sort by most recent
       const userPlans = plansData
-        .filter(plan => plan.userId === auth.currentUser?.uid)
+        .filter(plan => plan.userId === (auth as Auth).currentUser?.uid)
         .sort((a, b) => b.createdAt - a.createdAt)
         .slice(0, 5) // Show only the 5 most recent plans
       
       setRecentFeaturePlans(userPlans)
     } catch (error) {
       console.error('Error fetching feature plans:', error)
+      setError('Failed to load feature plans')
       setRecentFeaturePlans([])
     } finally {
       setIsLoadingFeatures(false)
     }
   }
 
-  // Refresh feature plans when path changes
+  // Fetch feature plans when client is ready and auth state changes
   useEffect(() => {
-    if (isClient && auth.currentUser) {
-      fetchRecentFeaturePlans()
-    }
-  }, [pathname, isClient])
+    if (!isClient) return;
+    
+    const unsubscribe = (auth as Auth).onAuthStateChanged((user: User | null) => {
+      if (user) {
+        fetchRecentFeaturePlans()
+      } else {
+        setRecentFeaturePlans([])
+        setIsLoadingFeatures(false)
+      }
+    })
+    
+    return () => unsubscribe()
+  }, [isClient])
 
   // If not client-side yet, render static sidebar
   if (!isClient) {
@@ -143,7 +186,7 @@ const JiraSidebar: React.FC<JiraSidebarProps> = ({ isOpen }) => {
         <div className="border-b border-[#EBECF0] dark:border-gray-700">
           <ProjectSelector 
             onSelectProject={setSelectedProject}
-            selectedProjectId={projectIdFromUrl || selectedProject?.id}
+            selectedProjectId={projectIdFromUrl || (selectedProject?.id || undefined)}
           />
         </div>
         
@@ -163,7 +206,12 @@ const JiraSidebar: React.FC<JiraSidebarProps> = ({ isOpen }) => {
             
             {isLoadingFeatures ? (
               <div className="px-2 py-2 text-sm text-[#6B778C] dark:text-gray-400">
+                <Loader2 size={16} className="inline mr-2 animate-spin" />
                 Loading plans...
+              </div>
+            ) : error ? (
+              <div className="px-2 py-2 text-sm text-red-500 dark:text-red-400">
+                {error}
               </div>
             ) : recentFeaturePlans.length === 0 ? (
               <div className="px-2 py-2 text-sm text-[#6B778C] dark:text-gray-400">
@@ -183,7 +231,7 @@ const JiraSidebar: React.FC<JiraSidebarProps> = ({ isOpen }) => {
                     <div className="w-5 h-5 mr-3 flex items-center justify-center">
                       <FileText size={16} className="text-[#6554C0]" />
                     </div>
-                    <span className="font-medium line-clamp-1">{plan.feature.title}</span>
+                    <span className="font-medium line-clamp-1">{plan.feature?.title || 'Untitled Feature'}</span>
                   </a>
                 ))}
                 
