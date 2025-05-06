@@ -29,7 +29,7 @@ const JiraHeader: React.FC = () => {
   const { user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const { hasActiveGeneration } = useProjectGeneration();
-  const { setActiveSection, sidebarOpen, setSidebarOpen } = useSidebar();
+  const { setActiveSection, sidebarOpen, setSidebarOpen, shouldShowSidebar } = useSidebar();
   const router = useRouter();
   const pathname = usePathname();
   
@@ -51,14 +51,16 @@ const JiraHeader: React.FC = () => {
   return (
     <>
       <header className="fixed top-0 left-0 right-0 flex items-center h-[48px] w-full bg-white dark:bg-gray-900 border-b border-[#EBECF0] dark:border-gray-800 shadow-sm px-2 z-30">
-        {/* Mobile menu button */}
-        <button 
-          className="lg:hidden flex items-center justify-center h-[48px] w-[48px] text-[#42526E] dark:text-gray-300"
-          onClick={toggleSidebar}
-          aria-label="Toggle sidebar"
-        >
-          <Menu size={20} />
-        </button>
+        {/* Mobile menu button - only show when sidebar should be visible */}
+        {shouldShowSidebar && (
+          <button 
+            className="lg:hidden flex items-center justify-center h-[48px] w-[48px] text-[#42526E] dark:text-gray-300"
+            onClick={toggleSidebar}
+            aria-label="Toggle sidebar"
+          >
+            <Menu size={20} />
+          </button>
+        )}
         
         {/* Left section with logo */}
         <div className="flex-shrink-0 flex items-center h-full">
@@ -195,8 +197,7 @@ const JiraHeader: React.FC = () => {
         </div>
       </header>
       
-      {/* Sidebar Component - always visible */}
-      <JiraSidebar isOpen={sidebarOpen} />
+      {/* Sidebar Component - renders through context, not directly */}
     </>
   )
 }

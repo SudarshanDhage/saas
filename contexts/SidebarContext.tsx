@@ -2,6 +2,8 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import { Project } from '@/lib/firestore'
+import JiraSidebar from '@/components/JiraSidebar'
+import { usePathname } from 'next/navigation'
 
 type SidebarContextType = {
   sidebarOpen: boolean
@@ -10,6 +12,7 @@ type SidebarContextType = {
   setActiveSection: (section: string) => void
   selectedProject: Project | null
   setSelectedProject: (project: Project | null) => void
+  shouldShowSidebar: boolean
 }
 
 const SidebarContext = createContext<SidebarContextType>({
@@ -19,6 +22,7 @@ const SidebarContext = createContext<SidebarContextType>({
   setActiveSection: () => {},
   selectedProject: null,
   setSelectedProject: () => {},
+  shouldShowSidebar: false
 })
 
 // Try to rehydrate any persisted state from localStorage
@@ -49,38 +53,47 @@ const getInitialProject = () => {
 }
 
 export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Initialize with true but will update based on screen size
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  // Default to true on larger screens, false on mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const [activeSection, setActiveSection] = useState(getInitialSection())
   const [selectedProject, setSelectedProject] = useState<Project | null>(getInitialProject())
+  const pathname = usePathname()
+  
+  // Determine if sidebar should be shown on current page
+  const shouldShowSidebar = !['/', '/sign-in', '/sign-up'].includes(pathname || '')
   
   // Listen for window resize and update sidebar state accordingly
   useEffect(() => {
     // Set initial state based on screen size
     const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        setSidebarOpen(false)
-      } else {
+      // Only auto-open sidebar on larger screens and when it should be visible
+      if (window.innerWidth >= 1024 && shouldShowSidebar) {
         setSidebarOpen(true)
+      } else {
+        setSidebarOpen(false)
       }
     }
     
     // Set initial state
-    handleResize()
-    
-    // Add event listener for window resize
-    window.addEventListener('resize', handleResize)
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('resize', handleResize)
+    if (typeof window !== 'undefined') {
+      handleResize()
+      
+      // Add event listener for window resize
+      window.addEventListener('resize', handleResize)
+      
+      // Cleanup
+      return () => {
+        window.removeEventListener('resize', handleResize)
+      }
     }
-  }, [])
+  }, [shouldShowSidebar])
   
   // Persist state changes to localStorage
   useEffect(() => {
     try {
-      localStorage.setItem('activeSection', activeSection)
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('activeSection', activeSection)
+      }
     } catch (e) {
       console.error('Failed to save activeSection to localStorage', e)
     }
@@ -88,7 +101,7 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
   
   useEffect(() => {
     try {
-      if (selectedProject) {
+      if (selectedProject && typeof window !== 'undefined') {
         localStorage.setItem('selectedProject', JSON.stringify(selectedProject))
       }
     } catch (e) {
@@ -103,9 +116,11 @@ export const SidebarProvider: React.FC<{ children: React.ReactNode }> = ({ child
       activeSection, 
       setActiveSection,
       selectedProject,
-      setSelectedProject
+      setSelectedProject,
+      shouldShowSidebar
     }}>
       {children}
+      {shouldShowSidebar && <JiraSidebar isOpen={sidebarOpen} />}
     </SidebarContext.Provider>
   )
 }

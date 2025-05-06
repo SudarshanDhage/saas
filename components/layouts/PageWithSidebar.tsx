@@ -14,16 +14,18 @@ const PageWithSidebar: React.FC<PageWithSidebarProps> = ({
   children,
   pageTitle = 'Home'
 }) => {
-  const { activeSection, sidebarOpen } = useSidebar();
+  const { activeSection, sidebarOpen, shouldShowSidebar } = useSidebar();
   
   // Add logging to help identify issues
   useEffect(() => {
     console.log('PageWithSidebar rendered:', { 
       pageTitle, 
       activeSection,
-      shouldRenderMainContent: shouldRenderMainContent() 
+      shouldRenderMainContent: shouldRenderMainContent(),
+      sidebarOpen,
+      shouldShowSidebar
     });
-  }, [pageTitle, activeSection]);
+  }, [pageTitle, activeSection, sidebarOpen, shouldShowSidebar]);
   
   // Determine if we should render the main content or an EmptyStateView
   const shouldRenderMainContent = () => {
@@ -92,11 +94,11 @@ const PageWithSidebar: React.FC<PageWithSidebarProps> = ({
   
   return (
     <div className={cn(
-      "pt-[48px] min-h-screen w-full transition-all duration-300 ease-in-out",
-      // Responsive margins - only apply margin when sidebar is open on larger screens
-      sidebarOpen ? "lg:ml-[240px]" : "ml-0"
+      "w-full transition-all duration-300 ease-in-out py-4",
+      // Responsive margins - only apply margin when sidebar should be shown and is open
+      shouldShowSidebar && sidebarOpen ? "lg:pl-[240px]" : "pl-0"
     )}>
-      <div className="w-full px-4 md:px-6 lg:px-8">
+      <div className="w-full h-full px-4 md:px-6 lg:px-8">
         {shouldRenderMainContent() ? (
           children
         ) : (
