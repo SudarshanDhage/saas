@@ -1,0 +1,13 @@
+// Copy and paste these rules into the Firebase Console -> Firestore Database -> Rules
+// These are the most permissive rules possible - ONLY FOR DEVELOPMENT!
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow all read and write operations from any client
+    // WARNING: This is extremely insecure and should ONLY be used for development
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+} 
