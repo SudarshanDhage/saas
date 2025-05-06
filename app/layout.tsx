@@ -1,5 +1,4 @@
 import './globals.css'
-import JiraHeader from '@/components/JiraHeader'
 import { Inter } from 'next/font/google'
 import { SidebarProvider } from '@/contexts/SidebarContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
@@ -26,11 +25,11 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
+    <html lang="en" className={cn(inter.className, "overflow-x-hidden")} suppressHydrationWarning>
       <head>
         <link rel="icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT3mPYVDehq6Y1uj1Bz-Ha6DU457FBBtHkaRA&s" />
       </head>
-      <body className={cn('min-h-screen', inter.className)}>
+      <body className={cn('min-h-screen bg-background overflow-x-hidden', inter.className)}>
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

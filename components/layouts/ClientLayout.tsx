@@ -49,15 +49,18 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
         <UserAccountProvider>
           <SidebarProvider>
             <ProjectGenerationProvider>
-              {!isHomePage && !isAuthPage && <JiraHeader />}
-              <div 
-                id="main-content" 
-                className={cn(
-                  isHomePage || isAuthPage ? 'bg-white dark:bg-gray-900' : 'bg-[#F4F5F7] dark:bg-gray-900',
-                  isHomePage || isAuthPage ? '' : 'absolute top-[48px] left-0 right-0 bottom-0 overflow-auto'
-                )}
-              >
-                {children}
+              <div className="flex flex-col min-h-screen w-full overflow-x-hidden bg-[#F4F5F7] dark:bg-gray-900">
+                {!isHomePage && !isAuthPage && <JiraHeader />}
+                <main 
+                  id="main-content" 
+                  className={cn(
+                    "flex-1",
+                    isHomePage || isAuthPage ? 'bg-white dark:bg-gray-900' : '',
+                    !isHomePage && !isAuthPage ? 'pt-[48px]' : ''
+                  )}
+                >
+                  {children}
+                </main>
               </div>
               <Toaster />
             </ProjectGenerationProvider>
