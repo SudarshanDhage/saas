@@ -1,0 +1,14 @@
+This folder should contain the following avatar images:
+- avatar-woman-1.png
+- avatar-woman-2.png
+- avatar-woman-3.png
+- avatar-man-1.png
+- avatar-man-2.png
+
+You can create these images using:
+1. Free avatar generators like https://avataaars.com/ or https://boringavatars.com/
+2. Use a placeholder service like https://ui-avatars.com/ with name initials
+3. Create simple SVG avatars with different colors
+4. Use free stock photos and crop them to circles
+
+Make sure the images are square and at least 200x200px for good quality. 
