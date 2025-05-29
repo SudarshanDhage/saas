@@ -35,7 +35,7 @@ const SprintInfoCard: React.FC<SprintInfoCardProps> = ({
               </CardDescription>
             )}
           </div>
-          <div className="flex items-center gap-2 text-sm text-[#6B778C] dark:text-gray-400">
+          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
             <Button 
               variant="outline" 
               size="sm" 
@@ -45,7 +45,7 @@ const SprintInfoCard: React.FC<SprintInfoCardProps> = ({
             >
               <ChevronLeft size={14} />
             </Button>
-            <span className="bg-[#DFE1E6] text-[#42526E] px-2 py-1 rounded text-xs">
+            <span className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 px-2 py-1 rounded text-xs">
               {currentSprintIndex + 1} of {totalSprints}
             </span>
             <Button 

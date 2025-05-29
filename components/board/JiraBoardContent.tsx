@@ -7,10 +7,11 @@ import BoardColumn from './BoardColumn';
 import TaskModal from './TaskModal';
 import BoardActions from './BoardActions';
 
-// Initial empty columns state
+// Initial empty columns state (now includes Review column)
 const initialColumns: Column[] = [
   { id: 'todo', title: 'TO DO', tasks: [] },
   { id: 'inprogress', title: 'IN PROGRESS', tasks: [] },
+  { id: 'review', title: 'REVIEW', tasks: [] },
   { id: 'done', title: 'DONE', tasks: [] }
 ];
 
@@ -252,12 +253,12 @@ const JiraBoardContent: React.FC<JiraBoardProps> = ({
   return (
     <>
       {/* Board actions in toolbar */}
-      <div className="flex items-center px-4 py-2 border-b border-[#EBECF0] dark:border-gray-700">
+      <div className="flex items-center px-4 py-2 border-b border-[#EBECF0]">
         <BoardActions onAddToBoard={handleAddToBoard} />
       </div>
       
       {/* Board content */}
-      <div className="flex p-4 bg-white dark:bg-gray-800 overflow-x-auto no-scrollbar" style={{ height: 'calc(100vh - 205px)' }}>
+      <div className="flex p-4 bg-white overflow-x-auto no-scrollbar" style={{ height: 'calc(100vh - 205px)' }}>
         {columns.map(column => (
           <BoardColumn 
             key={column.id}
@@ -286,7 +287,7 @@ const JiraBoardContent: React.FC<JiraBoardProps> = ({
         
         {/* Add column button */}
         <div className="w-[40px] mx-2 flex items-start flex-shrink-0">
-          <button className="w-[32px] h-[32px] bg-[#EBECF0] dark:bg-gray-700 rounded flex items-center justify-center text-[#42526E] dark:text-gray-300 hover:bg-[#DFE1E6] dark:hover:bg-gray-600">
+          <button className="w-[32px] h-[32px] bg-[#EBECF0] rounded flex items-center justify-center text-[#42526E] hover:bg-[#DFE1E6]">
             <Plus size={16} />
           </button>
         </div>

@@ -1,71 +1,105 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Helper function to check if the user is authenticated
+    
+    // Helper functions for authentication
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Helper function to check if the user is accessing their own data
     function isCurrentUser(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // Default deny all rule
+    // Default deny all access
     match /{document=**} {
       allow read, write: if false;
     }
     
-    // Root users collection
+    // User document rules
     match /users/{userId} {
-      // Allow users to read and write their own user document
+      // Users can read and write their own user document
       allow read, write: if isCurrentUser(userId);
+      allow create: if isAuthenticated() && userId == request.auth.uid;
       
-      // Projects sub-collection
+      // Allow limited read access for ANY authenticated user (for email-based lookup)
+      // This allows collection queries to work for sharing functionality
+      allow read: if isAuthenticated();
+      
+      // User's projects subcollection
       match /projects/{projectId} {
-        allow read, write: if isCurrentUser(userId);
+        // Project owner has full access
+        allow read, write, create, delete: if isCurrentUser(userId);
         
-        // Project sprints
+        // Project sprints subcollection  
         match /sprints/{sprintId} {
-          allow read, write: if isCurrentUser(userId);
+          allow read, write, create, delete: if isCurrentUser(userId);
         }
         
-        // Project features
-        match /features/{featureId} {
-          allow read, write: if isCurrentUser(userId);
+        // Sprint task states subcollection (NEW - for task state persistence)
+        match /sprintTaskStates/{stateId} {
+          allow read, write, create, delete: if isCurrentUser(userId);
         }
         
-        // Project documentation
+        // Project documentation subcollection
         match /documentation/{docId} {
-          allow read, write: if isCurrentUser(userId);
+          allow read, write, create, delete: if isCurrentUser(userId);
+        }
+        
+        // Project-specific features subcollection
+        match /features/{featureId} {
+          allow read, write, create, delete: if isCurrentUser(userId);
         }
       }
       
-      // Features sub-collection
+      // User's features subcollection
       match /features/{featureId} {
-        allow read, write: if isCurrentUser(userId);
+        allow read, write, create, delete: if isCurrentUser(userId);
+        
+        // Feature task states subcollection (NEW - for task state persistence)
+        match /taskStates/{stateId} {
+          allow read, write, create, delete: if isCurrentUser(userId);
+        }
       }
       
-      // Account sub-collection
+      // User's account subcollection  
       match /account/{docId} {
-        allow read, write: if isCurrentUser(userId);
+        allow read, write, create, delete: if isCurrentUser(userId);
       }
     }
     
-    // CollectionGroup queries - needed for querying across subcollections
+    // Collection group queries for shared projects
     match /{path=**}/projects/{projectId} {
+      // Allow reading projects where user has access through sharing
       allow read: if isAuthenticated() && 
-                  get(/databases/$(database)/documents/$(path)).data.userId == request.auth.uid;
+                     (resource.data.userId == request.auth.uid ||
+                      (resource.data.sharedWith != null && 
+                       request.auth.uid in resource.data.sharedWith));
+      
+      // Allow updating shared projects with write access
+      allow update: if isAuthenticated() && 
+                       (resource.data.userId == request.auth.uid ||
+                        (resource.data.permissions != null && 
+                         resource.data.permissions[request.auth.uid] in ['write', 'admin']));
+      
+      // Only owner can delete projects
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
     }
     
-    match /{path=**}/features/{featureId} {
-      allow read: if isAuthenticated() && 
-                  get(/databases/$(database)/documents/$(path)).data.userId == request.auth.uid;
-    }
+    // Project invitations collection
+    match /project_invitations/{invitationId} {
+      // Allow creating invitations (for project owners)
+      allow create: if isAuthenticated();
     
-    match /{path=**}/sprints/{sprintId} {
+      // Allow reading invitations for invited users
       allow read: if isAuthenticated() && 
-                  get(/databases/$(database)/documents/$(path)).data.userId == request.auth.uid;
+                     (resource.data.invitedUserId == request.auth.uid ||
+                      resource.data.ownerUserId == request.auth.uid);
+      
+      // Allow updating invitations (for accepting/declining)
+      allow update: if isAuthenticated() && 
+                       resource.data.invitedUserId == request.auth.uid;
     }
   }
-}
+} 

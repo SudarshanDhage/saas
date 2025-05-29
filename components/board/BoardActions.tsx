@@ -342,26 +342,26 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
         <Button 
           variant="outline" 
           size="sm" 
-          className="flex items-center h-[32px] px-2 py-1 border border-[#DFE1E6] dark:border-gray-600 rounded-sm bg-[#FAFBFC] dark:bg-gray-700 hover:bg-[#F4F5F7] dark:hover:bg-gray-600"
+          className="flex items-center h-[32px] px-2 py-1 border border-[#DFE1E6] rounded-sm bg-[#FAFBFC] hover:bg-[#F4F5F7]"
         >
-          <Plus size={14} className="text-[#42526E] dark:text-gray-300 mr-1" />
-          <span className="text-sm text-[#42526E] dark:text-gray-300">Add to Board</span>
+          <Plus size={14} className="text-[#42526E] mr-1" />
+          <span className="text-sm text-[#42526E]">Add to Board</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] dark:bg-gray-800 dark:border-gray-700">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="dark:text-white">Add to Board</DialogTitle>
+          <DialogTitle>Add to Board</DialogTitle>
         </DialogHeader>
         
         <div className="mt-4 max-h-[calc(90vh-180px)] overflow-hidden flex flex-col">
           <Tabs defaultValue="projects" className="w-full" onValueChange={setActiveTab}>
-            <TabsList className="mb-4 dark:bg-gray-700">
-              <TabsTrigger value="projects" className="flex items-center dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white dark:text-gray-300">
-                <Workflow size={14} className="mr-2 text-[#00875A] dark:text-emerald-400" />
+            <TabsList className="mb-4">
+              <TabsTrigger value="projects" className="flex items-center">
+                <Workflow size={14} className="mr-2 text-[#00875A]" />
                 Projects
               </TabsTrigger>
-              <TabsTrigger value="features" className="flex items-center dark:data-[state=active]:bg-gray-600 dark:data-[state=active]:text-white dark:text-gray-300">
-                <Zap size={14} className="mr-2 text-[#6554C0] dark:text-purple-400" />
+              <TabsTrigger value="features" className="flex items-center">
+                <Zap size={14} className="mr-2 text-[#6554C0]" />
                 Features
               </TabsTrigger>
             </TabsList>
@@ -370,7 +370,7 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
               <input
                 type="text"
                 placeholder={`Search ${activeTab}...`}
-                className="w-full px-3 py-2 border border-[#DFE1E6] dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-[#172B4D] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#4C9AFF] dark:focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-[#DFE1E6] rounded-md focus:outline-none focus:ring-2 focus:ring-[#4C9AFF]"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
@@ -380,10 +380,10 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
               <TabsContent value="projects" className="mt-2 overflow-y-auto">
                 {isLoading ? (
                   <div className="flex justify-center py-8">
-                    <Loader2 size={24} className="animate-spin text-[#0052CC] dark:text-blue-400" />
+                    <Loader2 size={24} className="animate-spin text-[#0052CC]" />
                   </div>
                 ) : filteredProjects.length === 0 ? (
-                  <div className="text-center py-8 text-[#6B778C] dark:text-gray-400">
+                  <div className="text-center py-8 text-[#6B778C]">
                     {searchTerm ? 'No projects match your search' : 'No projects available'}
                   </div>
                 ) : (
@@ -391,73 +391,69 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
                     {filteredProjects.map(project => (
                       <div 
                         key={project.id} 
-                        className="border-b border-[#F4F5F7] dark:border-gray-700 last:border-b-0"
+                        className="border-b border-[#F4F5F7] last:border-b-0"
                       >
-                        <div className="flex items-center justify-between p-3 hover:bg-[#F4F5F7] dark:hover:bg-gray-700">
+                        <div className="flex items-center justify-between p-3 hover:bg-[#F4F5F7]">
                           <div className="flex items-center flex-1">
                             <Checkbox 
                               id={`project-${project.id}`}
                               checked={project.selected}
                               onCheckedChange={() => toggleItemSelection(project.id, 'project')}
-                              className="mr-3 data-[state=checked]:bg-[#0052CC] data-[state=checked]:dark:bg-blue-500"
+                              className="mr-3 data-[state=checked]:bg-[#00875A] data-[state=checked]:text-[#FFFFFF]"
                             />
-                            <div className="w-6 h-6 rounded-sm bg-[#00875A] dark:bg-emerald-600 flex items-center justify-center mr-2">
-                              <Workflow className="w-4 h-4 text-white" />
-                            </div>
                             <div>
-                              <label 
-                                htmlFor={`project-${project.id}`} 
-                                className="text-[#172B4D] dark:text-white cursor-pointer font-medium"
+                              <label
+                                htmlFor={`project-${project.id}`}
+                                className="text-sm font-medium text-[#172B4D] cursor-pointer"
                               >
                                 {project.title}
                               </label>
-                              <p className="text-xs text-[#6B778C] dark:text-gray-400">
-                                {project.description.length > 60 
-                                  ? `${project.description.substring(0, 60)}...` 
-                                  : project.description}
+                              <p className="text-xs text-[#6B778C] mt-1 line-clamp-1">
+                                {project.description}
                               </p>
                             </div>
                           </div>
-                          
-                          <button 
+                          <button
                             onClick={() => toggleExpand(project.id, 'project')}
-                            className="p-1 ml-2 text-[#42526E] dark:text-gray-300 hover:bg-[#F4F5F7] dark:hover:bg-gray-600 rounded"
+                            className="text-[#6B778C] p-2 hover:bg-[#EBECF0] rounded"
                           >
-                            {project.expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            {isDetailLoading && expandedId === project.id ? (
+                              <Loader2 size={16} className="animate-spin" />
+                            ) : project.expanded ? (
+                              <ChevronUp size={16} />
+                            ) : (
+                              <ChevronDown size={16} />
+                            )}
                           </button>
                         </div>
                         
-                        {project.expanded && (
-                          <div className="pl-10 pb-2 border-t border-[#F4F5F7] dark:border-gray-700 bg-[#FAFBFC] dark:bg-gray-700">
-                            {isDetailLoading && expandedId === project.id ? (
-                              <div className="flex justify-center py-3">
-                                <Loader2 size={16} className="animate-spin text-[#0052CC] dark:text-blue-400" />
-                              </div>
-                            ) : project.features.length === 0 ? (
-                              <div className="py-3 text-center text-[#6B778C] dark:text-gray-400 text-sm">
-                                No features available
-                              </div>
-                            ) : (
-                              project.features.map(feature => (
-                                <div key={feature.id} className="flex items-center py-2">
-                                  <Checkbox 
-                                    id={`feature-${feature.id}`}
-                                    checked={feature.selected}
-                                    onCheckedChange={() => toggleChildSelection(project.id, feature.id, 'project')}
-                                    className="mr-3 data-[state=checked]:bg-[#0052CC] data-[state=checked]:dark:bg-blue-500"
-                                  />
-                                  <div className="w-5 h-5 rounded-sm bg-[#6554C0] dark:bg-purple-600 flex items-center justify-center mr-2">
-                                    <Zap className="w-3.5 h-3.5 text-white" />
-                                  </div>
-                                  <label 
-                                    htmlFor={`feature-${feature.id}`} 
-                                    className="text-sm text-[#172B4D] dark:text-white cursor-pointer"
+                        {/* Features sub-items */}
+                        {project.expanded && project.features.length > 0 && (
+                          <div className="pl-10 pb-2 bg-[#FAFAFA]">
+                            {project.features.map(feature => (
+                              <div 
+                                key={feature.id} 
+                                className="flex items-center px-3 py-2 hover:bg-[#F4F5F7]"
+                              >
+                                <Checkbox 
+                                  id={`feature-${feature.id}`}
+                                  checked={feature.selected}
+                                  onCheckedChange={() => toggleChildSelection(project.id, feature.id, 'project')}
+                                  className="mr-3 data-[state=checked]:bg-[#6554C0] data-[state=checked]:text-[#FFFFFF]"
+                                />
+                                <div>
+                                  <label
+                                    htmlFor={`feature-${feature.id}`}
+                                    className="text-sm font-medium text-[#172B4D] cursor-pointer"
                                   >
                                     {feature.name}
                                   </label>
+                                  <p className="text-xs text-[#6B778C] mt-1 line-clamp-1">
+                                    {feature.description}
+                                  </p>
                                 </div>
-                              ))
-                            )}
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -469,10 +465,10 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
               <TabsContent value="features" className="mt-2 overflow-y-auto">
                 {isLoading ? (
                   <div className="flex justify-center py-8">
-                    <Loader2 size={24} className="animate-spin text-[#6554C0] dark:text-purple-400" />
+                    <Loader2 size={24} className="animate-spin text-[#6554C0]" />
                   </div>
                 ) : filteredFeatures.length === 0 ? (
-                  <div className="text-center py-8 text-[#6B778C] dark:text-gray-400">
+                  <div className="text-center py-8 text-[#6B778C]">
                     {searchTerm ? 'No features match your search' : 'No features available'}
                   </div>
                 ) : (
@@ -480,9 +476,9 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
                     {filteredFeatures.map(feature => (
                       <div 
                         key={feature.id} 
-                        className="border-b border-[#F4F5F7] dark:border-gray-700 last:border-b-0"
+                        className="border-b border-[#F4F5F7] last:border-b-0"
                       >
-                        <div className="flex items-center justify-between p-3 hover:bg-[#F4F5F7] dark:hover:bg-gray-700">
+                        <div className="flex items-center justify-between p-3 hover:bg-[#F4F5F7]">
                           <div className="flex items-center flex-1">
                             <Checkbox 
                               id={`feature-${feature.id}`}
@@ -493,18 +489,18 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
                             <div>
                               <label
                                 htmlFor={`feature-${feature.id}`}
-                                className="text-sm font-medium text-[#172B4D] dark:text-white cursor-pointer"
+                                className="text-sm font-medium text-[#172B4D] cursor-pointer"
                               >
                                 {feature.title}
                               </label>
-                              <p className="text-xs text-[#6B778C] dark:text-gray-400 mt-1 line-clamp-1">
+                              <p className="text-xs text-[#6B778C] mt-1 line-clamp-1">
                                 {feature.description}
                               </p>
                             </div>
                           </div>
                           <button
                             onClick={() => toggleExpand(feature.id, 'feature')}
-                            className="text-[#6B778C] dark:text-gray-400 p-2 hover:bg-[#EBECF0] dark:hover:bg-gray-600 rounded"
+                            className="text-[#6B778C] p-2 hover:bg-[#EBECF0] rounded"
                           >
                             {isDetailLoading && expandedId === feature.id ? (
                               <Loader2 size={16} className="animate-spin" />
@@ -518,11 +514,11 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
                         
                         {/* Tasks sub-items */}
                         {feature.expanded && feature.tasks.length > 0 && (
-                          <div className="pl-10 pb-2 bg-[#FAFAFA] dark:bg-gray-750">
+                          <div className="pl-10 pb-2 bg-[#FAFAFA]">
                             {feature.tasks.map(task => (
                               <div 
                                 key={task.id} 
-                                className="flex items-center px-3 py-2 hover:bg-[#F4F5F7] dark:hover:bg-gray-700"
+                                className="flex items-center px-3 py-2 hover:bg-[#F4F5F7]"
                               >
                                 <Checkbox 
                                   id={`task-${task.id}`}
@@ -533,12 +529,12 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
                                 <div>
                                   <label
                                     htmlFor={`task-${task.id}`}
-                                    className="text-sm font-medium text-[#172B4D] dark:text-white cursor-pointer"
+                                    className="text-sm font-medium text-[#172B4D] cursor-pointer"
                                   >
                                     {task.name}
                                   </label>
                                   {task.description && (
-                                    <p className="text-xs text-[#6B778C] dark:text-gray-400 mt-1 line-clamp-1">
+                                    <p className="text-xs text-[#6B778C] mt-1 line-clamp-1">
                                       {task.description}
                                     </p>
                                   )}
@@ -556,19 +552,22 @@ const BoardActions: React.FC<BoardActionsProps> = ({ onAddToBoard }) => {
           </Tabs>
         </div>
         
-        <DialogFooter className="mt-4 border-t border-[#F4F5F7] dark:border-gray-700 pt-4">
+        <DialogFooter className="mt-4 pt-4 border-t border-[#F4F5F7]">
           <Button 
-            variant="secondary" 
+            variant="outline" 
+            size="sm"
             onClick={() => setIsOpen(false)}
-            className="border border-[#DFE1E6] dark:border-gray-600 bg-[#F4F5F7] dark:bg-gray-700 hover:bg-[#EBECF0] dark:hover:bg-gray-600 text-[#42526E] dark:text-gray-300"
+            className="mr-2"
           >
             Cancel
           </Button>
-          <Button 
+          <Button
             onClick={addSelectedToBoard}
-            className="bg-[#0052CC] dark:bg-blue-600 text-white hover:bg-[#0065FF] dark:hover:bg-blue-500"
+            size="sm"
+            className="bg-[#0052CC] hover:bg-[#0065FF] text-white flex items-center"
           >
-            Add to Board
+            <CheckSquare size={16} className="mr-2" />
+            Add Selected to Board
           </Button>
         </DialogFooter>
       </DialogContent>

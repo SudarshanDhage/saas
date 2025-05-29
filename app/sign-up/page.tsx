@@ -35,7 +35,7 @@ export default function SignUp() {
       setIsLoading(true)
       setError('')
       await signUp(email, password)
-      router.push('/project')
+      router.push('/projects')
     } catch (error: any) {
       setError(error.message || 'Failed to create account')
     } finally {
@@ -48,7 +48,7 @@ export default function SignUp() {
       setIsLoading(true)
       setError('')
       await signInWithGoogle()
-      router.push('/project')
+      router.push('/projects')
     } catch (error: any) {
       setError(error.message || 'Failed to sign in with Google')
     } finally {

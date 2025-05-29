@@ -6,13 +6,17 @@ import FeatureForm from '@/components/features/FeatureForm'
 import FeatureReview from '@/components/features/FeatureReview'
 import FeaturePlanView from '@/components/features/FeaturePlanView'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { useToast } from '@/components/ui/use-toast'
 import { generateFeatureImplementation } from '@/lib/gemini'
-import { createFeaturePlan, SingleFeaturePlan } from '@/lib/firestore'
+import { createFeaturePlan, SingleFeaturePlan } from '@/lib/firestore-v2'
 import { ArrowLeft, Loader2 } from 'lucide-react'
+import Link from 'next/link'
 import PageWithSidebar from '@/components/layouts/PageWithSidebar'
 import { useSidebar } from '@/contexts/SidebarContext'
-import AuthCheck from '@/components/auth/AuthCheck'
-import { auth } from '@/lib/firebase'
 
 type StepType = 'input' | 'review' | 'generating-plan' | 'complete'
 
@@ -27,6 +31,7 @@ const CreateFeaturePage = () => {
   } | null>(null)
   const [featurePlan, setFeaturePlan] = useState<SingleFeaturePlan | null>(null)
   const { setActiveSection } = useSidebar()
+  const { toast } = useToast()
   
   useEffect(() => {
     // Set active section when component mounts
@@ -37,11 +42,6 @@ const CreateFeaturePage = () => {
   const handleFeatureSubmit = async (feature: string) => {
     try {
       setIsLoading(true)
-      
-      if (!auth.currentUser) {
-        throw new Error('Authentication required to create a feature')
-      }
-      
       setFeatureInput(feature)
       
       // Generate feature implementation plan
@@ -57,7 +57,11 @@ const CreateFeaturePage = () => {
       setCurrentStep('review')
     } catch (error) {
       console.error('Error generating feature implementation:', error)
-      alert('An error occurred while generating the feature implementation. Please try again.')
+      toast({
+        title: "Error",
+        description: "An error occurred while generating the feature implementation. Please try again.",
+        variant: "destructive"
+      })
     } finally {
       setIsLoading(false)
     }
@@ -79,10 +83,6 @@ const CreateFeaturePage = () => {
       setCurrentStep('generating-plan')
       setIsLoading(true)
       
-      if (!auth.currentUser) {
-        throw new Error('Authentication required to create a feature plan')
-      }
-      
       // Generate implementation plan with Gemini AI
       const implementation = await generateFeatureImplementation(
         JSON.stringify({
@@ -92,36 +92,36 @@ const CreateFeaturePage = () => {
       )
       
       // Create feature plan
-      const newFeaturePlan: Omit<SingleFeaturePlan, 'id' | 'createdAt'> = {
+      const newFeaturePlan = {
         feature: {
           title: featureData.title,
           description: featureData.description
         },
         developerPlan: implementation.developerPlan,
         aiPlan: implementation.aiPlan,
-        userId: auth.currentUser.uid
+        updatedAt: Date.now(),
+        userId: '' // Will be set automatically by firestore-v2
       }
       
       // Save to Firestore
       const createdPlan = await createFeaturePlan(newFeaturePlan)
       
       // Set feature plan for display
-      const completedPlan = {
+      setFeaturePlan({
         ...newFeaturePlan,
         id: createdPlan.id,
         createdAt: Date.now()
-      }
-      
-      setFeaturePlan(completedPlan)
-      
-      // Set active section to the new feature plan to highlight it in the sidebar
-      setActiveSection(`feature-${createdPlan.id}`)
+      })
       
       // Navigate to complete step
       setCurrentStep('complete')
     } catch (error) {
       console.error('Error generating implementation plan:', error)
-      alert('An error occurred while generating the implementation plan. Please try again.')
+      toast({
+        title: "Error",
+        description: "An error occurred while generating the implementation plan. Please try again.",
+        variant: "destructive"
+      })
       setCurrentStep('review')
     } finally {
       setIsLoading(false)
@@ -134,10 +134,10 @@ const CreateFeaturePage = () => {
       'input': (
         <div className="container py-8 max-w-7xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-[#172B4D] dark:text-white mb-2">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
               Create Feature Implementation Plan
             </h1>
-            <p className="text-[#6B778C] dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Describe the feature you want to implement in detail
             </p>
           </div>
@@ -151,10 +151,10 @@ const CreateFeaturePage = () => {
       'review': featureData && (
         <div className="container py-8 max-w-7xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-[#172B4D] dark:text-white mb-2">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
               Review Feature
             </h1>
-            <p className="text-[#6B778C] dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Review and edit the AI-generated feature description
             </p>
           </div>
@@ -171,18 +171,18 @@ const CreateFeaturePage = () => {
       'generating-plan': (
         <div className="container py-8 max-w-7xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-[#172B4D] dark:text-white mb-2">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
               Generating Implementation Plan
             </h1>
-            <p className="text-[#6B778C] dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Almost there! Creating your implementation plan...
             </p>
           </div>
           <div className="w-full h-[70vh] flex flex-col items-center justify-center">
             <div className="text-center">
-              <Loader2 size={48} className="mx-auto mb-4 animate-spin text-[#6554C0]" />
-              <h2 className="text-xl font-medium text-[#172B4D] dark:text-white mb-2">Generating Implementation Plan</h2>
-              <p className="text-[#6B778C] dark:text-gray-400">
+              <Loader2 size={48} className="mx-auto mb-4 animate-spin text-purple-600 dark:text-purple-400" />
+              <h2 className="text-xl font-medium text-slate-900 dark:text-white mb-2">Generating Implementation Plan</h2>
+              <p className="text-slate-600 dark:text-slate-300">
                 Creating detailed implementation plans for developers and AI assistants...
               </p>
             </div>
@@ -193,10 +193,10 @@ const CreateFeaturePage = () => {
       'complete': featurePlan && (
         <div className="container py-8 max-w-7xl mx-auto">
           <div className="mb-6">
-            <h1 className="text-2xl font-semibold text-[#172B4D] dark:text-white mb-2">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-white mb-2">
               Implementation Plan Created
             </h1>
-            <p className="text-[#6B778C] dark:text-gray-400">
+            <p className="text-slate-600 dark:text-slate-300">
               Your feature implementation plan has been created successfully
             </p>
           </div>
@@ -222,11 +222,9 @@ const CreateFeaturePage = () => {
   }
   
   return (
-    <AuthCheck>
-      <PageWithSidebar pageTitle="Feature Plans">
-        {renderContent()}
-      </PageWithSidebar>
-    </AuthCheck>
+    <PageWithSidebar pageTitle="Feature Plans">
+      {renderContent()}
+    </PageWithSidebar>
   )
 }
 

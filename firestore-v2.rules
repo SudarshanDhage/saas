@@ -1,0 +1,218 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for authentication and permissions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isCurrentUser(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function hasProjectAccess(projectData, userId) {
+      return projectData.userId == userId ||
+             (projectData.keys().hasAll(['sharedWith']) && 
+              projectData.sharedWith is list && 
+              userId in projectData.sharedWith);
+    }
+    
+    function hasProjectWriteAccess(projectData, userId) {
+      // Owner has full access
+      if (projectData.userId == userId) {
+        return true;
+      }
+      
+      // Check shared permissions
+      if (projectData.keys().hasAll(['permissions']) && 
+          projectData.permissions is map &&
+          userId in projectData.permissions) {
+        return projectData.permissions[userId] in ['write', 'admin'];
+      }
+      
+      return false;
+    }
+    
+    function hasProjectAdminAccess(projectData, userId) {
+      // Owner has admin access
+      if (projectData.userId == userId) {
+        return true;
+      }
+      
+      // Check shared permissions
+      if (projectData.keys().hasAll(['permissions']) && 
+          projectData.permissions is map &&
+          userId in projectData.permissions) {
+        return projectData.permissions[userId] == 'admin';
+      }
+      
+      return false;
+    }
+    
+    function isValidProjectData() {
+      return request.resource.data.keys().hasAll(['title', 'description', 'userId', 'createdAt']) &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.title is string &&
+             request.resource.data.description is string &&
+             request.resource.data.createdAt is number;
+    }
+    
+    function isValidFeatureData() {
+      return request.resource.data.keys().hasAll(['feature', 'userId', 'createdAt']) &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.feature is map &&
+             request.resource.data.createdAt is number;
+    }
+    
+    function isValidSprintData() {
+      return request.resource.data.keys().hasAll(['projectId', 'userId', 'createdAt']) &&
+             request.resource.data.userId == request.auth.uid &&
+             request.resource.data.projectId is string &&
+             request.resource.data.createdAt is number;
+    }
+    
+    // Default deny all access
+    match /{document=**} {
+      allow read, write: if false;
+    }
+    
+    // User document rules
+    match /users/{userId} {
+      // Users can read and write their own user document
+      allow read, write: if isCurrentUser(userId);
+      allow create: if isAuthenticated() && userId == request.auth.uid;
+      
+      // User's projects subcollection
+      match /projects/{projectId} {
+        // Project owner has full access
+        allow read, write: if isCurrentUser(userId);
+        
+        // Allow creation only by the user themselves
+        allow create: if isCurrentUser(userId) && isValidProjectData();
+        
+        // Project sprints subcollection  
+        match /sprints/{sprintId} {
+          // Sprint access based on project access
+          allow read: if isCurrentUser(userId) || 
+                         hasProjectAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+          
+          // Sprint write access based on project write access
+          allow write: if isCurrentUser(userId) || 
+                          hasProjectWriteAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+          
+          allow create: if (isCurrentUser(userId) || 
+                           hasProjectWriteAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid)) &&
+                          isValidSprintData();
+        }
+        
+        // Sprint task states subcollection (NEW)
+        match /sprintTaskStates/{stateId} {
+          // Task state access based on project access
+          allow read: if isCurrentUser(userId) || 
+                         hasProjectAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+          
+          // Task state write access based on project write access
+          allow write: if isCurrentUser(userId) || 
+                          hasProjectWriteAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+          
+          allow create: if isCurrentUser(userId) || 
+                           hasProjectWriteAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+        }
+        
+        // Project documentation subcollection
+        match /documentation/{docId} {
+          // Documentation access based on project access
+          allow read: if isCurrentUser(userId) || 
+                         hasProjectAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+          
+          // Documentation write access based on project write access  
+          allow write: if isCurrentUser(userId) || 
+                          hasProjectWriteAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+        }
+        
+        // Project-specific features subcollection
+        match /features/{featureId} {
+          // Feature access based on project access
+          allow read: if isCurrentUser(userId) || 
+                         hasProjectAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+          
+          // Feature write access based on project write access
+          allow write: if isCurrentUser(userId) || 
+                          hasProjectWriteAccess(get(/databases/$(database)/documents/users/$(userId)/projects/$(projectId)).data, request.auth.uid);
+        }
+      }
+      
+      // User's features subcollection
+      match /features/{featureId} {
+        // Users can access their own features
+        allow read, write: if isCurrentUser(userId);
+        allow create: if isCurrentUser(userId) && isValidFeatureData();
+        
+        // Feature task states subcollection (NEW)
+        match /taskStates/{stateId} {
+          // Users can access their own feature task states
+          allow read, write, create: if isCurrentUser(userId);
+        }
+      }
+      
+      // User's account subcollection  
+      match /account/{docId} {
+        allow read, write: if isCurrentUser(userId);
+      }
+    }
+    
+    // Collection group queries for shared projects
+    match /{path=**}/projects/{projectId} {
+      // Allow reading projects where user has access through sharing
+      allow read: if isAuthenticated() && 
+                     hasProjectAccess(resource.data, request.auth.uid);
+      
+      // Allow updating shared projects with write access
+      allow update: if isAuthenticated() && 
+                       hasProjectWriteAccess(resource.data, request.auth.uid);
+      
+      // Only owner can delete projects
+      allow delete: if isAuthenticated() && 
+                       resource.data.userId == request.auth.uid;
+    }
+    
+    // Collection group queries for shared project sprints
+    match /{path=**}/sprints/{sprintId} {
+      allow read: if isAuthenticated() && 
+                     hasProjectAccess(
+                       get(/databases/$(database)/documents/$(path)).data, 
+                       request.auth.uid
+                     );
+      
+      allow write: if isAuthenticated() && 
+                      hasProjectWriteAccess(
+                        get(/databases/$(database)/documents/$(path)).data, 
+                        request.auth.uid
+                      );
+    }
+    
+    // Collection group queries for shared project features  
+    match /{path=**}/features/{featureId} {
+      allow read: if isAuthenticated() && 
+                     (resource.data.userId == request.auth.uid ||
+                      hasProjectAccess(
+                        get(/databases/$(database)/documents/$(path)).data, 
+                        request.auth.uid
+                      ));
+      
+      allow write: if isAuthenticated() && 
+                      (resource.data.userId == request.auth.uid ||
+                       hasProjectWriteAccess(
+                         get(/databases/$(database)/documents/$(path)).data, 
+                         request.auth.uid
+                       ));
+    }
+    
+    // Special rules for user lookup (needed for sharing by email)
+    match /userLookup/{email} {
+      // Allow reading user lookup for sharing purposes
+      allow read: if isAuthenticated();
+    }
+  }
+} 

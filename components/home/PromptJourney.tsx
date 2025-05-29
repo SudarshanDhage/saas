@@ -243,7 +243,7 @@ export default function PromptJourney() {
                   {index < activeStep ? (
                     <CheckCircle className="h-4 w-4" />
                   ) : (
-                    React.cloneElement(step.icon as React.ReactElement, { className: 'h-4 w-4' })
+                    React.cloneElement(step.icon as React.ReactElement<any>, { className: 'h-4 w-4' })
                   )}
                 </div>
                 <span className="text-sm font-medium flex-1">{step.title}</span>
@@ -299,7 +299,7 @@ export default function PromptJourney() {
                           className="flex items-center p-2 bg-white dark:bg-slate-900 rounded-md"
                         >
                           <div className="h-2 w-2 rounded-full bg-blue-500 mr-2"></div>
-                          <span className="text-sm">{output}</span>
+                          <span className="text-sm">{typeof output === 'string' ? output : JSON.stringify(output)}</span>
                         </div>
                       ))}
                     </div>
@@ -411,7 +411,7 @@ export default function PromptJourney() {
                         <div className="w-8 h-8 rounded-full bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 flex items-center justify-center mr-2">
                           <Link className="h-4 w-4" />
                         </div>
-                        <span className="text-sm">{output}</span>
+                        <span className="text-sm">{typeof output === 'string' ? output : JSON.stringify(output)}</span>
                       </div>
                     ))}
                   </div>

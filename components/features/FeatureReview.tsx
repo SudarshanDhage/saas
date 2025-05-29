@@ -36,7 +36,7 @@ const FeatureReview: React.FC<FeatureReviewProps> = ({
     <Card className="w-full max-w-3xl mx-auto">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl text-[#172B4D] dark:text-white">Review Feature</CardTitle>
+          <CardTitle className="text-xl text-slate-900 dark:text-white">Review Feature</CardTitle>
           <Button 
             variant="outline" 
             size="sm" 
@@ -54,7 +54,7 @@ const FeatureReview: React.FC<FeatureReviewProps> = ({
       <CardContent>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-[#172B4D] dark:text-white mb-1">
+            <label className="block text-sm font-medium text-slate-900 dark:text-white mb-1">
               Feature Title
             </label>
             {isEditing ? (
@@ -62,28 +62,29 @@ const FeatureReview: React.FC<FeatureReviewProps> = ({
                 type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 rounded-md border border-[#DFE1E6] focus:outline-none focus:ring-2 focus:ring-[#4C9AFF] focus:border-transparent"
+                className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
               />
             ) : (
-              <div className="p-3 bg-[#F4F5F7] rounded-md border border-[#DFE1E6]">
-                <p className="text-[#172B4D] dark:text-white font-medium">{title}</p>
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-600">
+                <p className="text-slate-900 dark:text-white font-medium">{title}</p>
               </div>
             )}
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-[#172B4D] dark:text-white mb-1">
+            <label className="block text-sm font-medium text-slate-900 dark:text-white mb-1">
               Feature Description
             </label>
             {isEditing ? (
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="min-h-[150px]"
+                rows={6}
+                className="w-full px-3 py-2 rounded-md border border-slate-200 dark:border-slate-600 focus:outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent bg-white dark:bg-slate-700 text-slate-900 dark:text-white"
               />
             ) : (
-              <div className="p-3 bg-[#F4F5F7] rounded-md border border-[#DFE1E6] min-h-[150px]">
-                <p className="text-[#42526E] whitespace-pre-line">{description}</p>
+              <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-600 min-h-[150px]">
+                <p className="text-slate-600 dark:text-slate-400 whitespace-pre-line">{description}</p>
               </div>
             )}
           </div>

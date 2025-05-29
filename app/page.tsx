@@ -35,12 +35,12 @@ import CommunityHub from '@/components/home/CommunityHub'
 // import TemplateGallery from '@/components/home/TemplateGallery'
 
 export default function Home() {
-  const { user, signInWithGoogle } = useAuth()
+  const { user, signInWithGoogle, logout } = useAuth()
   const router = useRouter()
   const [dashboardItems, setDashboardItems] = useState([
-    { title: 'My Projects', description: 'View all your active projects', path: '/projects', icon: <FolderGit2 className="h-6 w-6 text-blue-500" /> },
-    { title: 'Create New Project', description: 'Start planning your next big idea', path: '/project/new', icon: <Rocket className="h-6 w-6 text-purple-500" /> },
-    { title: 'Dashboard', description: 'View activity and progress', path: '/dashboard', icon: <LayoutDashboard className="h-6 w-6 text-green-500" /> },
+    { title: 'Dashboard', description: 'View your main dashboard', path: '/dashboard', icon: <LayoutDashboard className="h-6 w-6 text-green-500" /> },
+    { title: 'Profile', description: 'Manage your account settings', path: '/sign-in', icon: <Users className="h-6 w-6 text-blue-500" /> },
+    { title: 'Analytics', description: 'View your activity and progress', path: '/dashboard', icon: <Rocket className="h-6 w-6 text-purple-500" /> },
   ])
 
   // Redirect if user is logged in - uncomment to enable auto-redirect
@@ -53,7 +53,7 @@ export default function Home() {
   const handleGoogleSignIn = async () => {
     try {
       await signInWithGoogle()
-      router.push('/projects')
+      router.push('/dashboard')
     } catch (error) {
       console.error('Google sign in failed:', error)
     }
@@ -84,9 +84,25 @@ export default function Home() {
                 </Link>
               </>
             ) : (
-              <Link href="/projects">
-                <Button size="sm">Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Button>
-              </Link>
+              <div className="flex items-center gap-2">
+                <Link href="/dashboard">
+                  <Button size="sm">Dashboard <ArrowRight className="ml-2 h-4 w-4" /></Button>
+                </Link>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      await logout()
+                      router.push('/')
+                    } catch (error) {
+                      console.error('Logout failed:', error)
+                    }
+                  }}
+                >
+                  Logout
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -256,7 +272,7 @@ export default function Home() {
               <h3 className="text-lg font-semibold mb-4">SprintPro</h3>
               <ul className="space-y-2">
                 <li><Link href="/" className="text-slate-300 hover:text-white transition-colors">Home</Link></li>
-                <li><Link href="/features" className="text-slate-300 hover:text-white transition-colors">Features</Link></li>
+                <li><Link href="/projects/features" className="text-slate-300 hover:text-white transition-colors">Features</Link></li>
                 <li><Link href="/pricing" className="text-slate-300 hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/blog" className="text-slate-300 hover:text-white transition-colors">Blog</Link></li>
               </ul>

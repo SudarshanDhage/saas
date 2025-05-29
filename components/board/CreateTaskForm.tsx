@@ -21,7 +21,7 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
   return (
     <div 
       ref={formRef}
-      className="bg-white dark:bg-gray-800 border border-[#4C9AFF] dark:border-blue-500 rounded-sm shadow-sm mb-3"
+      className="bg-white border border-[#4C9AFF] rounded-sm shadow-sm mb-3"
     >
       <form onSubmit={onSubmit}>
         <input
@@ -29,21 +29,21 @@ const CreateTaskForm: React.FC<CreateTaskFormProps> = ({
           placeholder="What needs to be done?"
           value={value}
           onChange={onChange}
-          className="w-full p-2 text-sm text-[#172B4D] dark:text-white bg-white dark:bg-gray-800 placeholder:text-[#7A869A] dark:placeholder:text-gray-400 focus:outline-none"
+          className="w-full p-2 text-sm text-[#172B4D] focus:outline-none"
           autoFocus
         />
-        <div className="flex items-center border-t border-[#F4F5F7] dark:border-gray-700 p-2">
+        <div className="flex items-center border-t border-[#F4F5F7] p-2">
           <div className="flex-1 flex items-center space-x-2">
-            <button type="button" className="text-[#42526E] dark:text-gray-300 hover:bg-[#F4F5F7] dark:hover:bg-gray-700 p-1 rounded">
+            <button type="button" className="text-[#42526E] hover:bg-[#F4F5F7] p-1 rounded">
               <CheckSquare size={16} />
             </button>
-            <ChevronDown size={16} className="text-[#42526E] dark:text-gray-300" />
+            <ChevronDown size={16} className="text-[#42526E]" />
           </div>
           <div className="flex items-center space-x-2">
             <button 
               type="button" 
               onClick={onCancel}
-              className="text-[#42526E] dark:text-gray-300 hover:bg-[#F4F5F7] dark:hover:bg-gray-700 p-1 rounded"
+              className="text-[#42526E] hover:bg-[#F4F5F7] p-1 rounded"
             >
               <ChevronUp size={16} />
             </button>

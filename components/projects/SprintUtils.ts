@@ -42,21 +42,30 @@ export function mapSprintTasksToTaskObjects(
       dependencies: task.dependencies,
       acceptanceCriteria: task.acceptanceCriteria,
       aiPrompt: task.aiPrompt,
-      status: 'todo'
+      status: task.status || 'todo',
+      comments: task.comments || [],
+      commitId: task.commitId || ''
     } as Task;
   });
 }
 
 /**
- * Create initial column structure with tasks
+ * Create initial column structure with tasks (now includes Review column)
  * @param tasks Array of Task objects
- * @returns Array of Column objects
+ * @returns Array of Column objects with 4 columns
  */
 export function createInitialColumns(tasks: Task[]): Column[] {
+  // Distribute tasks to appropriate columns based on their status
+  const todoTasks = tasks.filter(task => task.status === 'todo')
+  const inProgressTasks = tasks.filter(task => task.status === 'inprogress')
+  const reviewTasks = tasks.filter(task => task.status === 'review')
+  const doneTasks = tasks.filter(task => task.status === 'done')
+  
   return [
-    { id: 'todo', title: 'TO DO', tasks: [...tasks] },
-    { id: 'inprogress', title: 'IN PROGRESS', tasks: [] },
-    { id: 'done', title: 'DONE', tasks: [] }
+    { id: 'todo', title: 'TO DO', tasks: todoTasks },
+    { id: 'inprogress', title: 'IN PROGRESS', tasks: inProgressTasks },
+    { id: 'review', title: 'REVIEW', tasks: reviewTasks },
+    { id: 'done', title: 'DONE', tasks: doneTasks }
   ];
 }
 
@@ -74,7 +83,6 @@ export function updateTaskStatus(
 ): Column[] {
   // Find the task in all columns
   let task: Task | undefined;
-  const columnKey = newStatus === 'todo' ? 0 : newStatus === 'inprogress' ? 1 : 2;
   
   // Create updated columns with the task removed
   const updatedColumns = columns.map(col => {
@@ -91,10 +99,14 @@ export function updateTaskStatus(
   
   // Add the task to the new column if found
   if (task) {
-    updatedColumns[columnKey].tasks.push({
-      ...task,
-      status: newStatus
-    });
+    // Find the target column
+    const targetColumn = updatedColumns.find(col => col.id === newStatus);
+    if (targetColumn) {
+      targetColumn.tasks.push({
+        ...task,
+        status: newStatus
+      });
+    }
   }
   
   return updatedColumns;

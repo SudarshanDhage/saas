@@ -27,16 +27,16 @@ const ProjectIdeaForm: React.FC<ProjectIdeaFormProps> = ({
     <Card className="w-full max-w-3xl mx-auto">
       <form onSubmit={handleSubmit}>
         <CardHeader>
-          <CardTitle className="text-xl text-[#172B4D] dark:text-white">What would you like to build?</CardTitle>
+          <CardTitle className="text-xl text-slate-900 dark:text-white">What would you like to build?</CardTitle>
           <CardDescription>
             Describe your project idea in detail. The more information you provide, the better the AI can help you plan your project.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="bg-[#F9FAFC] p-4 rounded-lg border border-[#DFE1E6] flex items-start">
-              <Lightbulb size={20} className="text-[#FF8B00] mr-3 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-[#42526E]">
+            <div className="bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 flex items-start">
+              <Lightbulb size={20} className="text-yellow-600 dark:text-yellow-400 mr-3 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-slate-600 dark:text-slate-300">
                 <p className="font-medium mb-1">Tips for a great project outline:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Include the main purpose or goal of your application</li>

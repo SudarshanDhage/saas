@@ -274,22 +274,22 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
           <div 
             key={column.id} 
             className={`jira-column flex-shrink-0 mx-2 flex flex-col h-full
-              ${dragOverColumn === column.id ? 'bg-[#F8F9FA] dark:bg-gray-700' : ''}
+              ${dragOverColumn === column.id ? 'bg-slate-50 dark:bg-slate-700' : ''}
               transition-colors duration-100`}
             onDragOver={(e) => handleDragOver(e, column.id)}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, column.id)}
           >
             {/* Column header - fixed */}
-            <div className="bg-[#F4F5F7] dark:bg-gray-700 rounded-t p-2 mb-2 flex items-center justify-between sticky top-0 z-10">
+            <div className="bg-slate-100 dark:bg-slate-700 rounded-t p-2 mb-2 flex items-center justify-between sticky top-0 z-10">
               <div className="flex items-center">
-                <h3 className="text-sm font-medium text-[#42526E] dark:text-gray-200">{column.title}</h3>
-                <span className="ml-2 text-xs bg-[#DFE1E6] dark:bg-gray-600 px-2 py-0.5 rounded-full text-[#42526E] dark:text-gray-200">
+                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-300">{column.title}</h3>
+                <span className="ml-2 text-xs bg-slate-200 dark:bg-slate-600 px-2 py-0.5 rounded-full text-slate-600 dark:text-slate-300">
                   {column.tasks.length}
                 </span>
               </div>
               <div className="flex items-center">
-                <button className="text-[#6B778C] hover:text-[#42526E] dark:text-gray-400 dark:hover:text-gray-200 p-1">
+                <button className="text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200 p-1">
                   <MoreHorizontal size={14} />
                 </button>
               </div>
@@ -300,7 +300,7 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
               {column.tasks.map(task => (
                 <div 
                   key={task.id} 
-                  className={`bg-white dark:bg-gray-700 border dark:border-gray-600 rounded-sm shadow-sm p-3 cursor-move hover:bg-[#F4F5F7] dark:hover:bg-gray-600
+                  className={`bg-white dark:bg-gray-700 border border-slate-200 dark:border-slate-600 rounded-sm shadow-sm p-3 cursor-move hover:bg-slate-50 dark:hover:bg-slate-600
                     ${draggedTask?.id === task.id ? 'opacity-50' : 'opacity-100'}
                     transform transition-transform duration-100 ease-in-out hover:translate-y-[-2px] hover:shadow-md`}
                   draggable
@@ -308,50 +308,50 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
                   onDragEnd={handleDragEnd}
                   onClick={() => handleTaskClick(task)}
                 >
-                  <div className="text-sm font-medium text-[#172B4D] dark:text-white mb-2">
+                  <div className="text-sm font-medium text-slate-900 dark:text-white mb-2">
                     {task.content}
                   </div>
                   <div className="flex items-center flex-wrap gap-2">
-                    <span className="text-xs font-medium text-[#42526E] dark:text-gray-300 bg-[#DFE1E6] dark:bg-gray-600 px-1.5 py-0.5 rounded">
+                    <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded">
                       {task.taskId}
                     </span>
                     {task.sprintName && (
-                      <span className="text-xs bg-[#E3FCEF] dark:bg-green-800 text-[#00875A] dark:text-green-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full">
                         {task.sprintName}
                       </span>
                     )}
                     {task.priority && (
                       <span className={`text-xs px-2 py-0.5 rounded-full text-white ${
                         task.priority === 'high' 
-                          ? 'bg-[#E5493A]' 
+                          ? 'bg-red-500 dark:bg-red-600' 
                           : task.priority === 'medium' 
-                          ? 'bg-[#FF8B00]' 
-                          : 'bg-[#4CAF50]'
+                          ? 'bg-yellow-500 dark:bg-yellow-600' 
+                          : 'bg-green-500 dark:bg-green-600'
                       }`}>
                         {task.priority || 'medium'}
                       </span>
                     )}
                     {task.estimatedHours && (
-                      <span className="text-xs text-[#6B778C] dark:text-gray-300 flex items-center">
+                      <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center">
                         <Clock size={12} className="mr-1" />
                         {task.estimatedHours}h
                       </span>
                     )}
                     {/* Show comment count if there are any */}
                     {task.comments && task.comments.length > 0 && (
-                      <span className="text-xs text-[#6B778C] dark:text-gray-300 flex items-center">
+                      <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center">
                         <MessageSquare size={12} className="mr-1" />
                         {task.comments.length}
                       </span>
                     )}
                     {/* Show commit ID indicator if exists */}
                     {task.commitId && (
-                      <span className="text-xs text-[#6B778C] dark:text-gray-300 flex items-center">
+                      <span className="text-xs text-slate-600 dark:text-slate-400 flex items-center">
                         <GitCommit size={12} className="mr-1" />
                       </span>
                     )}
                     {task.description && (
-                      <span className="text-xs text-[#6B778C] dark:text-gray-300 block w-full mt-1 line-clamp-2">
+                      <span className="text-xs text-slate-600 dark:text-slate-400 block w-full mt-1 line-clamp-2">
                         {task.description}
                       </span>
                     )}
@@ -362,9 +362,9 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
               {/* Empty column state with drop indicator */}
               {column.tasks.length === 0 && (
                 <div className={`h-16 border-2 border-dashed rounded flex items-center justify-center
-                  ${dragOverColumn === column.id ? 'border-[#4C9AFF] bg-[#DEEBFF] dark:bg-blue-900 dark:border-blue-700' : 'border-[#DFE1E6] dark:border-gray-600'}
+                  ${dragOverColumn === column.id ? 'border-blue-600 dark:border-blue-400 bg-blue-50 dark:bg-blue-900/20' : 'border-slate-200 dark:border-slate-700'}
                   transition-colors duration-100`}>
-                  <span className="text-xs text-[#6B778C] dark:text-gray-300">
+                  <span className="text-xs text-slate-600 dark:text-slate-400">
                     {dragOverColumn === column.id 
                       ? 'Drop to add task here'
                       : 'No tasks yet'}
@@ -388,16 +388,16 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
           >
             <div className="p-6">
               <div className="flex items-center mb-4">
-                <span className="text-xs font-medium text-[#42526E] dark:text-gray-300 bg-[#DFE1E6] dark:bg-gray-700 px-1.5 py-0.5 rounded mr-2">
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300 bg-slate-200 dark:bg-slate-600 px-1.5 py-0.5 rounded mr-2">
                   {selectedTask.taskId}
                 </span>
-                <h2 className="text-xl font-medium text-[#172B4D] dark:text-white">{selectedTask.content}</h2>
+                <h2 className="text-xl font-medium text-slate-900 dark:text-white">{selectedTask.content}</h2>
               </div>
               
               {selectedTask.sprintName && (
                 <div className="mb-4">
-                  <span className="text-sm text-[#6B778C] dark:text-gray-300 font-medium">Sprint:</span>
-                  <span className="ml-2 text-sm bg-[#E3FCEF] dark:bg-green-900 text-[#00875A] dark:text-green-300 px-2 py-0.5 rounded-full">
+                  <span className="text-sm text-slate-600 dark:text-slate-400 font-medium">Sprint:</span>
+                  <span className="ml-2 text-sm bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 px-2 py-0.5 rounded-full">
                     {selectedTask.sprintName}
                   </span>
                 </div>
@@ -405,31 +405,31 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
 
               {selectedTask.estimatedHours && (
                 <div className="mb-4">
-                  <span className="text-sm text-[#6B778C] dark:text-gray-300 font-medium">Estimated time:</span>
-                  <span className="ml-2 text-sm text-[#172B4D] dark:text-white">
+                  <span className="text-sm text-slate-600 dark:text-slate-400 font-medium">Estimated time:</span>
+                  <span className="ml-2 text-sm text-slate-900 dark:text-white">
                     {selectedTask.estimatedHours} hours
                   </span>
                 </div>
               )}
               
               <div className="mb-4">
-                <h3 className="text-sm font-medium text-[#6B778C] dark:text-gray-300 mb-2">Description</h3>
-                <p className="text-sm text-[#172B4D] dark:text-white">{selectedTask.description || 'No description provided.'}</p>
+                <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Description</h3>
+                <p className="text-sm text-slate-900 dark:text-white">{selectedTask.description || 'No description provided.'}</p>
               </div>
 
               {selectedTask.implementation && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-[#6B778C] dark:text-gray-300 mb-2">Implementation Details</h3>
-                  <p className="text-sm text-[#172B4D] dark:text-white whitespace-pre-line">{selectedTask.implementation}</p>
+                  <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Implementation Details</h3>
+                  <p className="text-sm text-slate-900 dark:text-white whitespace-pre-line">{selectedTask.implementation}</p>
                 </div>
               )}
 
               {selectedTask.acceptanceCriteria && selectedTask.acceptanceCriteria.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-[#6B778C] dark:text-gray-300 mb-2">Acceptance Criteria</h3>
+                  <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Acceptance Criteria</h3>
                   <ul className="list-disc pl-5">
                     {selectedTask.acceptanceCriteria.map((criteria, index) => (
-                      <li key={index} className="text-sm text-[#172B4D] dark:text-white mb-1">{criteria}</li>
+                      <li key={index} className="text-sm text-slate-900 dark:text-white mb-1">{criteria}</li>
                     ))}
                   </ul>
                 </div>
@@ -437,10 +437,10 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
 
               {selectedTask.dependencies && selectedTask.dependencies.length > 0 && (
                 <div className="mb-4">
-                  <h3 className="text-sm font-medium text-[#6B778C] dark:text-gray-300 mb-2">Dependencies</h3>
+                  <h3 className="text-sm font-medium text-slate-600 dark:text-slate-400 mb-2">Dependencies</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedTask.dependencies.map((dep, index) => (
-                      <span key={index} className="text-xs bg-[#DEEBFF] dark:bg-blue-900 text-[#0052CC] dark:text-blue-300 px-2 py-1 rounded">
+                      <span key={index} className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-1 rounded">
                         {dep}
                       </span>
                     ))}
@@ -450,9 +450,9 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
 
               {/* Comments section - if there are comments, show them with a toggle */}
               {selectedTask.comments && selectedTask.comments.length > 0 && (
-                <div className="mb-4 mt-6 border-t border-[#DFE1E6] dark:border-gray-700 pt-4">
+                <div className="mb-4 mt-6 border-t border-slate-200 dark:border-slate-700 pt-4">
                   <div 
-                    className="flex items-center justify-between cursor-pointer text-[#42526E] hover:text-[#172B4D] dark:text-gray-300 dark:hover:text-white"
+                    className="flex items-center justify-between cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                     onClick={() => setShowComments(!showComments)}
                   >
                     <h3 className="text-sm font-medium flex items-center">
@@ -465,14 +465,14 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
                   {showComments && (
                     <div className="mt-3 space-y-3 max-h-60 overflow-y-auto">
                       {selectedTask.comments.map((comment) => (
-                        <div key={comment.id} className="bg-[#F8F9FA] dark:bg-gray-700 p-3 rounded border border-[#DFE1E6] dark:border-gray-600">
+                        <div key={comment.id} className="bg-slate-50 dark:bg-slate-700 p-3 rounded border border-slate-200 dark:border-slate-600">
                           <div className="flex items-center justify-between mb-1">
-                            <span className="text-xs font-medium text-[#42526E] dark:text-gray-300">{comment.author}</span>
-                            <span className="text-xs text-[#6B778C] dark:text-gray-400">
+                            <span className="text-xs font-medium text-slate-600 dark:text-slate-300">{comment.author}</span>
+                            <span className="text-xs text-slate-600 dark:text-slate-400">
                               {new Date(comment.timestamp).toLocaleString()}
                             </span>
                           </div>
-                          <p className="text-sm text-[#172B4D] dark:text-white">{comment.text}</p>
+                          <p className="text-sm text-slate-900 dark:text-white">{comment.text}</p>
                         </div>
                       ))}
                     </div>
@@ -480,97 +480,86 @@ const EnhancedJiraBoard: React.FC<EnhancedJiraBoardProps> = ({ columns, setColum
                 </div>
               )}
               
-              {/* Action buttons section at the bottom */}
-              <div className="mt-6 pt-4 border-t border-[#DFE1E6] dark:border-gray-700">
-                <div className="flex flex-wrap gap-3 mb-4">
+              {/* Action buttons */}
+              <div className="mt-6 pt-4 border-t border-slate-200 dark:border-slate-700">
+                <div className="flex gap-3 mb-4">
                   <button 
-                    className="flex items-center gap-1 text-sm bg-[#F4F5F7] hover:bg-[#EBECF0] dark:bg-gray-700 dark:hover:bg-gray-600 text-[#42526E] dark:text-gray-300 px-3 py-2 rounded-md transition-colors"
-                    onClick={() => {
-                      setShowCommentForm(!showCommentForm);
-                      setShowCommitForm(false);
-                    }}
+                    onClick={() => setShowCommentForm(!showCommentForm)}
+                    className="flex items-center gap-1 text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 px-3 py-2 rounded-md transition-colors"
                   >
-                    <MessageSquare size={16} />
+                    <MessageSquare size={14} />
                     {showCommentForm ? 'Cancel' : 'Add Comment'}
                   </button>
                   
                   <button 
-                    className="flex items-center gap-1 text-sm bg-[#F4F5F7] hover:bg-[#EBECF0] dark:bg-gray-700 dark:hover:bg-gray-600 text-[#42526E] dark:text-gray-300 px-3 py-2 rounded-md transition-colors"
-                    onClick={() => {
-                      setShowCommitForm(!showCommitForm);
-                      setShowCommentForm(false);
-                    }}
+                    onClick={() => setShowCommitForm(!showCommitForm)}
+                    className="flex items-center gap-1 text-sm bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-600 dark:text-slate-300 px-3 py-2 rounded-md transition-colors"
                   >
-                    <GitCommit size={16} />
+                    <GitCommit size={14} />
                     {showCommitForm ? 'Cancel' : (selectedTask.commitId ? 'Update Commit ID' : 'Add Commit ID')}
                   </button>
                 </div>
-                
+
                 {/* Comment form */}
                 {showCommentForm && (
-                  <div className="mb-6 bg-[#F8F9FA] dark:bg-gray-700 p-4 rounded border border-[#DFE1E6] dark:border-gray-600">
-                    <h3 className="text-sm font-medium text-[#172B4D] dark:text-white mb-3 flex items-center">
+                  <div className="mb-6 bg-slate-50 dark:bg-slate-700 p-4 rounded border border-slate-200 dark:border-slate-600">
+                    <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3 flex items-center">
                       <MessageSquare size={16} className="mr-2" />
-                      Add New Comment
+                      Add Comment
                     </h3>
+                    
                     <Textarea 
-                      placeholder="Type your comment here..."
+                      placeholder="Add a comment..."
                       value={commentText}
                       onChange={handleCommentTextChange}
-                      className="text-sm min-h-[100px] mb-3"
+                      className="mb-3"
                     />
-                    <div className="flex justify-end">
-                      <Button 
-                        size="sm" 
-                        className="bg-[#0052CC] hover:bg-[#0747A6] text-white"
-                        onClick={handleAddComment}
-                        disabled={!commentText.trim()}
-                      >
-                        Add Comment
-                      </Button>
-                    </div>
+                    <Button 
+                      onClick={handleAddComment}
+                      disabled={!commentText.trim()}
+                      className="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white"
+                    >
+                      Add Comment
+                    </Button>
                   </div>
                 )}
-                
+
                 {/* Commit ID form */}
                 {showCommitForm && (
-                  <div className="mb-6 bg-[#F8F9FA] dark:bg-gray-700 p-4 rounded border border-[#DFE1E6] dark:border-gray-600">
-                    <h3 className="text-sm font-medium text-[#172B4D] dark:text-white mb-3 flex items-center">
+                  <div className="mb-6 bg-slate-50 dark:bg-slate-700 p-4 rounded border border-slate-200 dark:border-slate-600">
+                    <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-3 flex items-center">
                       <GitCommit size={16} className="mr-2" />
-                      {selectedTask.commitId ? 'Update Commit ID' : 'Add Commit ID'}
+                      Commit ID
                     </h3>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Input 
-                        placeholder="Enter the commit ID for this task" 
-                        value={commitId}
-                        onChange={handleCommitIdChange}
-                        className="text-sm"
-                      />
-                      <Button 
-                        size="sm" 
-                        className="bg-[#0052CC] hover:bg-[#0747A6] text-white whitespace-nowrap"
-                        onClick={handleUpdateCommitId}
-                      >
-                        Save
-                      </Button>
-                    </div>
+                    
+                    <Input 
+                      placeholder="Enter the commit ID for this task"
+                      value={commitId}
+                      onChange={handleCommitIdChange}
+                      className="mb-3"
+                    />
+                    <Button 
+                      onClick={handleUpdateCommitId}
+                      className="bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white whitespace-nowrap"
+                    >
+                      Save Commit ID
+                    </Button>
+                    
                     {selectedTask.commitId && (
-                      <p className="text-xs text-[#6B778C] dark:text-gray-400">
-                        Current commit: <span className="font-mono bg-[#DFE1E6] dark:bg-gray-600 px-1 py-0.5 rounded">{selectedTask.commitId}</span>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        Current commit: <span className="font-mono bg-slate-200 dark:bg-slate-600 px-1 py-0.5 rounded">{selectedTask.commitId}</span>
                       </p>
                     )}
                   </div>
                 )}
               </div>
-              
-              <div className="flex justify-end mt-4">
-                <Button 
-                  className="px-4 py-2 bg-[#0052CC] text-white rounded hover:bg-[#0065FF] text-sm font-medium"
-                  onClick={() => setSelectedTask(null)}
-                >
-                  Close
-                </Button>
-              </div>
+
+              <button 
+                onClick={() => setSelectedTask(null)}
+                className="px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded hover:bg-blue-700 dark:hover:bg-blue-600 text-sm font-medium"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

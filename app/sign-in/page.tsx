@@ -29,7 +29,7 @@ export default function SignIn() {
       setIsLoading(true)
       setError('')
       await signIn(email, password)
-      router.push('/project')
+      router.push('/projects')
     } catch (error: any) {
       setError(error.message || 'Failed to sign in')
     } finally {
@@ -42,7 +42,7 @@ export default function SignIn() {
       setIsLoading(true)
       setError('')
       await signInWithGoogle()
-      router.push('/project')
+      router.push('/projects')
     } catch (error: any) {
       setError(error.message || 'Failed to sign in with Google')
     } finally {

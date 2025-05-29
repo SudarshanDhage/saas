@@ -10,7 +10,6 @@ export interface Comment {
 export interface Task {
   id: string;
   content: string;
-  title?: string;       // Task title
   isCompleted: boolean;
   status?: string;
   priority?: string;
@@ -26,10 +25,6 @@ export interface Task {
   aiPrompt?: string;
   comments?: Comment[];
   commitId?: string;
-  linkedId?: string;      // Reference to another entity (project, feature, etc.)
-  linkedTitle?: string;   // Title of the linked entity
-  assignee?: string;      // Assignee of the task
-  subtaskCount?: number;  // Number of subtasks
 }
 
 export interface Column {
@@ -48,19 +43,11 @@ export interface TaskCardProps {
   task: Task;
   projectId?: string;
   featureId?: string;
-  columnId?: string;
-  onDragStart?: (task: Task) => void;
-  onDragEnd?: () => void;
-  onToggleCompletion?: (taskId: string, columnId: string) => void;
-  onMenuToggle?: (taskId: string) => void;
-  isMenuOpen?: boolean;
-  onTaskClick?: (task: Task) => void;
 }
 
 export interface ColumnHeaderProps {
-  title: string;
-  taskCount: number;
-  isDone?: boolean;
+  column: Column;
+  onAddTask: (columnId: string) => void;
 }
 
 export interface TaskModalProps {

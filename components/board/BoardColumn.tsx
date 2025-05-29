@@ -33,7 +33,7 @@ interface BoardColumnProps {
 
 const BoardColumn: React.FC<BoardColumnProps> = ({
   column,
-  draggedTask,
+  _draggedTask,
   activeColumn,
   dragOverColumn,
   newTaskContent,
@@ -59,11 +59,11 @@ const BoardColumn: React.FC<BoardColumnProps> = ({
   
   return (
     <div 
-      className="w-[280px] mx-2 flex-shrink-0 jira-column"
+      className="w-[280px] mx-2 flex-shrink-0"
       onDragOver={(e) => onDragOver(e, column.id)}
       onDrop={(e) => onDrop(e, column.id)}
     >
-      <div className={`group bg-[#F4F5F7] dark:bg-gray-700 rounded p-3 ${dragOverColumn === column.id ? 'border-2 border-[#4C9AFF] dark:border-blue-500' : ''}`}>
+      <div className={`group bg-[#F4F5F7] rounded p-3 ${dragOverColumn === column.id ? 'border-2 border-[#4C9AFF]' : ''}`}>
         <ColumnHeader 
           title={column.title} 
           taskCount={column.tasks.length}

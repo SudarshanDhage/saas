@@ -27,16 +27,16 @@ const FeatureForm: React.FC<FeatureFormProps> = ({
     <Card className="w-full max-w-3xl mx-auto">
       <form onSubmit={handleSubmit}>
         <CardHeader>
-          <CardTitle className="text-xl text-[#172B4D] dark:text-white">Feature Implementation Plan</CardTitle>
+          <CardTitle className="text-xl text-slate-900 dark:text-white">Feature Implementation Plan</CardTitle>
           <CardDescription>
             Describe the feature you want to implement in detail. The AI will create a detailed implementation plan for you.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="bg-[#F9FAFC] p-4 rounded-lg border border-[#DFE1E6] flex items-start">
-              <Lightbulb size={20} className="text-[#FF8B00] mr-3 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-[#42526E]">
+            <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg border border-purple-200 dark:border-purple-700 flex items-start">
+              <Lightbulb size={20} className="text-purple-600 dark:text-purple-400 mr-3 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-slate-600 dark:text-slate-400">
                 <p className="font-medium mb-1">Tips for a comprehensive feature description:</p>
                 <ul className="list-disc pl-4 space-y-1">
                   <li>Clearly define what the feature does and its purpose</li>

@@ -1,8 +1,8 @@
 // Import the functions you need from the SDKs you need
-import { initializeApp, getApp, getApps } from 'firebase/app';
-import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getStorage, connectStorageEmulator } from 'firebase/storage';
-import { getAuth, connectAuthEmulator, GoogleAuthProvider } from 'firebase/auth';
+import { initializeApp, getApp, getApps, FirebaseApp } from 'firebase/app';
+import { getFirestore, connectFirestoreEmulator, Firestore } from 'firebase/firestore';
+import { getStorage, connectStorageEmulator, FirebaseStorage } from 'firebase/storage';
+import { getAuth, connectAuthEmulator, GoogleAuthProvider, Auth } from 'firebase/auth';
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
@@ -25,12 +25,12 @@ if (!firebaseConfig.apiKey ||
   console.error('Firebase config is missing required fields. Check your environment variables.');
 }
 
-// Initialize Firebase
-let app;
-let auth;
-let db;
-let storage;
-let googleProvider;
+// Initialize Firebase with proper types
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
+let googleProvider: GoogleAuthProvider;
 
 try {
   app = !getApps().length ? initializeApp(firebaseConfig) : getApp();

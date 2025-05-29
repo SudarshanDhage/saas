@@ -14,7 +14,7 @@ const CreateButton: React.FC<CreateButtonProps> = ({
 }) => {
   return (
     <div 
-      className={`flex items-center py-1 px-2 text-[#42526E] dark:text-gray-300 text-sm cursor-pointer hover:text-[#0052CC] dark:hover:text-blue-400 hover:bg-[#F4F5F7] dark:hover:bg-gray-700 rounded
+      className={`flex items-center py-1 px-2 text-[#42526E] text-sm cursor-pointer hover:text-[#0052CC] 
         ${!isInTodoColumn ? 'invisible group-hover:visible' : ''}`}
       onClick={onClick}
     >

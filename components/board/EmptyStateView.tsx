@@ -1,148 +1,118 @@
-import React from 'react'
-import { 
-  Workflow,
-  Zap,
-  Settings,
-  PlusCircle,
-  AlertTriangle
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import Link from 'next/link'
+import React from 'react';
+import { Search, FileText, Calendar, Target, Code, Archive, AlignLeft, HelpCircle, FolderKanban } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface EmptyStateViewProps {
-  viewType: string;
+  viewType: 'summary' | 'timeline' | 'calendar' | 'list' | 'forms' | 'goals' | 'code' | 'archived' | 'pages' | 'allprojects' | string;
 }
 
 const EmptyStateView: React.FC<EmptyStateViewProps> = ({ viewType }) => {
-  // Add logging to understand what viewType is being passed
-  console.log('EmptyStateView rendered with viewType:', viewType);
-  
-  // Map of view types to their configurations
-  const viewConfig: Record<string, {
-    title: string;
-    description: string;
-    icon: React.ReactNode;
-    actionText?: string;
-    actionLink?: string;
-  }> = {
+  // Configuration for different empty states
+  const emptyStateConfig: Record<string, any> = {
+    summary: {
+      icon: <Search className="w-12 h-12 text-gray-300" />,
+      title: 'Project summary is empty',
+      description: 'Add project data to view summary information and key metrics.',
+      actionText: 'Configure Summary',
+    },
+    timeline: {
+      icon: <AlignLeft className="w-12 h-12 text-gray-300" />,
+      title: 'Timeline view is empty',
+      description: 'Create tasks with dates to visualize your project timeline.',
+      actionText: 'Create Timeline',
+    },
+    calendar: {
+      icon: <Calendar className="w-12 h-12 text-gray-300" />,
+      title: 'Calendar view is empty',
+      description: 'Add tasks with due dates to see them in the calendar.',
+      actionText: 'Add Due Dates',
+    },
+    list: {
+      icon: <FileText className="w-12 h-12 text-gray-300" />,
+      title: 'List view is empty',
+      description: 'Create tasks to see them in a list format.',
+      actionText: 'Create Tasks',
+    },
+    forms: {
+      icon: <FileText className="w-12 h-12 text-gray-300" />,
+      title: 'No forms available',
+      description: 'Create forms to collect structured data for your project.',
+      actionText: 'Create Form',
+    },
+    goals: {
+      icon: <Target className="w-12 h-12 text-gray-300" />,
+      title: 'No goals set',
+      description: 'Define project goals to track your progress.',
+      actionText: 'Set Goals',
+    },
+    code: {
+      icon: <Code className="w-12 h-12 text-gray-300" />,
+      title: 'No code repositories linked',
+      description: 'Connect your code repositories to see them here.',
+      actionText: 'Link Repository',
+    },
+    archived: {
+      icon: <Archive className="w-12 h-12 text-gray-300" />,
+      title: 'There are no archived work items',
+      description: 'Any archived work items in your project will appear here.',
+      actionText: 'More about archiving work items',
+    },
+    pages: {
+      icon: <FileText className="w-12 h-12 text-gray-300" />,
+      title: 'No pages created',
+      description: 'Create project pages for notes and information.',
+      actionText: 'Create Page',
+    },
     allprojects: {
-      title: 'All projects',
-      description: 'View all your projects in one place.',
-      icon: <Workflow className="w-10 h-10 text-[#0052CC]" />,
-      actionText: 'Create new project',
-      actionLink: '/projects/create'
-    },
-    allfeatures: {
-      title: 'All features',
-      description: 'View all your feature plans in one place.',
-      icon: <Zap className="w-10 h-10 text-[#6554C0]" />,
-      actionText: 'Create new feature plan',
-      actionLink: '/features/create'
-    },
-    sprints: {
-      title: 'Sprint Projects',
-      description: 'Create and manage sprint projects for your team.',
-      icon: <PlusCircle className="w-10 h-10 text-[#00875A]" />,
-      actionText: 'Create new sprint project',
-      actionLink: '/projects/create'
-    },
-    features: {
-      title: 'Feature Plans',
-      description: 'Create and manage feature plans for your projects.',
-      icon: <PlusCircle className="w-10 h-10 text-[#6554C0]" />,
-      actionText: 'Create new feature plan',
-      actionLink: '/features/create'
-    },
-    settings: {
-      title: 'Settings',
-      description: 'Manage your account and application settings.',
-      icon: <Settings className="w-10 h-10 text-[#6B778C]" />
+      icon: <FolderKanban className="w-12 h-12 text-gray-300" />,
+      title: 'No projects found',
+      description: 'Create a new project or sprint plan to get started.',
+      actionText: 'Create Project',
     }
-  }
+  };
 
-  // Handle project-specific empty states
-  if (viewType.startsWith('project-')) {
-    const parts = viewType.split('-');
-    const projectId = parts[1];
-    const tab = parts[2] || 'overview';
-    
-    console.log('Project-specific empty state:', { projectId, tab });
-    
-    return (
-      <div className="flex flex-col items-center justify-center h-[80vh] px-4 text-center">
-        <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-full">
-          <AlertTriangle className="w-10 h-10 text-yellow-500" />
-        </div>
-        <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
-          Project Data Issue
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
-          There was a problem accessing the project data. This could be due to permission issues or the project might not exist.
-        </p>
-        
-        <div className="flex space-x-4">
-          <Link href="/projects">
-            <Button variant="outline" size="lg">
-              Back to Projects
-            </Button>
-          </Link>
-          <Link href="/projects/create">
-            <Button variant="jira" size="lg">
-              Create New Project
-            </Button>
-          </Link>
-        </div>
-        
-        <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded text-left text-sm max-w-md">
-          <p className="text-gray-500 mb-2">Debug Info:</p>
-          <p>View Type: <code>{viewType}</code></p>
-          <p>Project ID: <code>{projectId}</code></p>
-          <p>Tab: <code>{tab}</code></p>
-        </div>
-      </div>
-    );
-  }
-
-  // Fallback for unknown view types
+  // Default fallback configuration for any undefined view types
   const defaultConfig = {
-    title: `${viewType.charAt(0).toUpperCase() + viewType.slice(1)}`,
-    description: 'Select an item from the sidebar to view details.',
-    icon: <Workflow className="w-10 h-10 text-[#0052CC]" />
-  }
+    icon: <HelpCircle className="w-12 h-12 text-gray-300" />,
+    title: `${viewType.charAt(0).toUpperCase() + viewType.slice(1)} view`,
+    description: 'This section is currently under development.',
+    actionText: 'Go back',
+  };
 
-  // Get the configuration for the current view type or use default
-  const config = viewConfig[viewType] || defaultConfig
+  // Use the specific config if it exists, otherwise use the default
+  const config = emptyStateConfig[viewType] || defaultConfig;
 
   return (
-    <div className="flex flex-col items-center justify-center h-[80vh] px-4 text-center">
-      <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-full">
-        {config.icon}
-      </div>
-      <h2 className="text-2xl font-semibold text-gray-800 dark:text-gray-100 mb-2">
-        {config.title}
-      </h2>
-      <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
-        {config.description}
-      </p>
-      
-      {config.actionText && config.actionLink && (
-        <Link href={config.actionLink}>
-          <Button variant="jira" size="lg">
-            {config.actionText}
-          </Button>
-        </Link>
-      )}
-      
-      {/* Show debug info in non-production */}
-      {process.env.NODE_ENV !== 'production' && (
-        <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-800 rounded text-left text-sm max-w-md">
-          <p className="text-gray-500 mb-2">Debug Info:</p>
-          <p>View Type: <code>{viewType}</code></p>
-          <p>Recognized: <code>{viewConfig[viewType] ? 'Yes' : 'No'}</code></p>
+    <div className="flex flex-col items-center justify-center h-[calc(100vh-220px)] text-center p-6">
+      <div className="relative mb-8">
+        {/* Main Icon Background */}
+        <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center">
+          {config.icon}
         </div>
-      )}
+        
+        {/* Question marks around the icon */}
+        <div className="absolute -top-2 -left-10">
+          <HelpCircle className="w-8 h-8 text-gray-200" />
+        </div>
+        <div className="absolute -top-8 right-0">
+          <HelpCircle className="w-10 h-10 text-gray-200" />
+        </div>
+        <div className="absolute bottom-0 -right-8">
+          <HelpCircle className="w-6 h-6 text-gray-200" />
+        </div>
+      </div>
+      
+      <h2 className="text-xl font-medium text-gray-800 mb-2">{config.title}</h2>
+      <p className="text-gray-500 max-w-md mb-6">{config.description}</p>
+      
+      <Button 
+        variant="outline" 
+        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+      >
+        {config.actionText}
+      </Button>
     </div>
-  )
-}
+  );
+};
 
-export default EmptyStateView 
+export default EmptyStateView; 

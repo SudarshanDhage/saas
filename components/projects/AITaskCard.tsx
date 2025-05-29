@@ -151,7 +151,7 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
       {/* Custom Toast Notification */}
       {toast.visible && (
         <div className="fixed bottom-8 right-8 z-50 transition-all transform translate-y-0 opacity-100 duration-300">
-          <div className="bg-gradient-to-r from-[#0065FF] to-[#0052CC] text-white px-5 py-3 rounded-md shadow-xl flex items-center border border-[#4C9AFF]/30">
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 dark:from-blue-500 dark:to-blue-600 text-white px-5 py-3 rounded-md shadow-xl flex items-center border border-blue-400/30 dark:border-blue-500/30">
             <div className="bg-white/20 p-1 rounded-full mr-3">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -172,41 +172,41 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
         key={task.id} 
         className={`mb-4 border-l-4 ${
           task.status === 'done' 
-            ? 'border-l-[#36B37E] bg-[#F4FFF9]' 
+            ? 'border-l-green-500 bg-green-50 dark:bg-green-900/20' 
             : task.status === 'inprogress' 
-              ? 'border-l-[#0052CC] bg-[#F8FAFF]' 
-              : 'border-l-[#8777D9]'
+              ? 'border-l-blue-600 bg-blue-50 dark:bg-blue-900/20' 
+              : 'border-l-purple-500'
         }`}
       >
         <CardHeader className="py-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-md flex items-center">
-              <span className="text-xs font-medium bg-[#DFE1E6] text-[#42526E] px-2 py-0.5 rounded mr-2">
+              <span className="text-xs font-medium bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded mr-2">
                 {task.taskId}
               </span>
               {task.content}
             </CardTitle>
             <div className="flex items-center gap-2">
               {task.priority && (
-                <span className={`text-xs px-2 py-0.5 rounded-full text-white flex-shrink-0 ${
+                <span className={`text-xs px-2 py-0.5 rounded-full text-white ${
                   task.priority === 'high' 
-                    ? 'bg-[#E5493A]' 
+                    ? 'bg-red-500' 
                     : task.priority === 'medium' 
-                    ? 'bg-[#FF8B00]' 
-                    : 'bg-[#4CAF50]'
+                    ? 'bg-yellow-500' 
+                    : 'bg-green-500'
                 }`}>
                   {task.priority}
                 </span>
               )}
               {/* Indicators shown in the header */}
               {task.comments && task.comments.length > 0 && (
-                <span className="text-xs text-[#6B778C] dark:text-gray-400 flex items-center">
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center">
                   <MessageSquare size={12} className="mr-1" />
                   {task.comments.length}
                 </span>
               )}
               {task.commitId && (
-                <span className="text-xs text-[#6B778C] dark:text-gray-400 flex items-center">
+                <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center">
                   <GitCommit size={12} className="mr-1" />
                 </span>
               )}
@@ -219,21 +219,21 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
         <CardContent className="pb-4">
           <div className="flex items-center justify-between mb-4">
             {task.estimatedHours && (
-              <div className="text-xs text-[#6B778C] dark:text-gray-400 flex items-center">
+              <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center">
                 <Clock size={12} className="mr-1" />
-                Estimated: {task.estimatedHours} hours
+                {task.estimatedHours}h
               </div>
             )}
             
             {/* Task status controls */}
             <div className="flex items-center gap-2">
-              <div className="text-xs text-[#6B778C] dark:text-gray-400">Status:</div>
-              <div className="flex border border-[#DFE1E6] rounded-md overflow-hidden">
+              <div className="text-xs text-slate-500 dark:text-slate-400">Status:</div>
+              <div className="flex border border-slate-200 dark:border-slate-600 rounded-md overflow-hidden">
                 <button 
                   className={`px-2 py-1 text-xs ${
                     task.status === 'todo' 
-                      ? 'bg-[#DEEBFF] text-[#0052CC]' 
-                      : 'bg-white text-[#42526E] hover:bg-[#F4F5F7]'
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600'
                   }`}
                   onClick={() => onStatusChange(task.id, 'todo')}
                 >
@@ -242,8 +242,8 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
                 <button 
                   className={`px-2 py-1 text-xs ${
                     task.status === 'inprogress' 
-                      ? 'bg-[#DEEBFF] text-[#0052CC]' 
-                      : 'bg-white text-[#42526E] hover:bg-[#F4F5F7]'
+                      ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400' 
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600'
                   }`}
                   onClick={() => onStatusChange(task.id, 'inprogress')}
                 >
@@ -251,9 +251,19 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
                 </button>
                 <button 
                   className={`px-2 py-1 text-xs ${
+                    task.status === 'review' 
+                      ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' 
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600'
+                  }`}
+                  onClick={() => onStatusChange(task.id, 'review')}
+                >
+                  Review
+                </button>
+                <button 
+                  className={`px-2 py-1 text-xs ${
                     task.status === 'done' 
-                      ? 'bg-[#E3FCEF] text-[#00875A]' 
-                      : 'bg-white text-[#42526E] hover:bg-[#F4F5F7]'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' 
+                      : 'bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-600'
                   }`}
                   onClick={() => onStatusChange(task.id, 'done')}
                 >
@@ -267,15 +277,15 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
           {task.aiPrompt && (
             <div className="mt-4">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-[#172B4D] dark:text-white">AI Prompt:</h3>
+                <h3 className="text-sm font-medium text-slate-900 dark:text-white">AI Prompt:</h3>
                 <button 
-                  className="text-xs bg-[#0052CC] text-white px-3 py-1 rounded hover:bg-[#0065FF] focus:ring-2 focus:ring-[#4C9AFF] transition-colors"
+                  className="text-xs bg-blue-600 dark:bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-700 dark:hover:bg-blue-600 focus:ring-2 focus:ring-blue-400 dark:focus:ring-blue-500 transition-colors"
                   onClick={() => copyPromptToClipboard(task.aiPrompt || '')}
                 >
                   Copy Prompt
                 </button>
               </div>
-              <div className="bg-[#F8F9FA] border border-[#DFE1E6] rounded p-3 text-sm text-[#172B4D] dark:text-white whitespace-pre-line dark:bg-gray-700 dark:border-gray-600">
+              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded p-3 text-sm text-slate-900 dark:text-white whitespace-pre-line">
                 {task.aiPrompt}
               </div>
             </div>
@@ -283,10 +293,10 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
           
           {task.dependencies && task.dependencies.length > 0 && (
             <div className="mt-3">
-              <h3 className="text-xs font-medium text-[#6B778C] dark:text-gray-400 mb-1">Dependencies:</h3>
+              <h3 className="text-xs font-medium text-slate-500 dark:text-slate-400 mb-1">Dependencies:</h3>
               <div className="flex flex-wrap gap-1">
                 {task.dependencies.map((dep, index) => (
-                  <span key={index} className="text-xs bg-[#DEEBFF] text-[#0052CC] px-2 py-0.5 rounded">
+                  <span key={index} className="text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded">
                     {dep}
                   </span>
                 ))}
@@ -296,9 +306,9 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
           
           {/* Comments section - if there are comments, show them with a toggle */}
           {task.comments && task.comments.length > 0 && (
-            <div className="mt-4 border-t border-[#DFE1E6] pt-3">
+            <div className="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
               <div 
-                className="flex items-center justify-between cursor-pointer text-[#42526E] hover:text-[#172B4D] dark:text-gray-400 dark:hover:text-white"
+                className="flex items-center justify-between cursor-pointer text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                 onClick={() => setShowComments(!showComments)}
               >
                 <h3 className="text-xs font-medium flex items-center">
@@ -311,14 +321,14 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
               {showComments && (
                 <div className="mt-2 space-y-2 max-h-60 overflow-y-auto">
                   {task.comments.map((comment) => (
-                    <div key={comment.id} className="bg-[#F8F9FA] p-2 rounded border border-[#DFE1E6] text-xs">
+                    <div key={comment.id} className="bg-slate-50 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700 text-xs">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-[#42526E]">{comment.author}</span>
-                        <span className="text-[#6B778C] dark:text-gray-400">
+                        <span className="font-medium text-slate-600 dark:text-slate-400">{comment.author}</span>
+                        <span className="text-slate-500 dark:text-slate-400">
                           {new Date(comment.timestamp).toLocaleString()}
                         </span>
                       </div>
-                      <p className="text-[#172B4D] dark:text-white">{comment.text}</p>
+                      <p className="text-slate-900 dark:text-white">{comment.text}</p>
                     </div>
                   ))}
                 </div>
@@ -328,11 +338,11 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
         </CardContent>
         
         {/* Card Footer - Contains action buttons for comments and commit ID */}
-        <CardFooter className="pt-0 pb-3 flex flex-wrap gap-2 justify-end border-t border-[#DFE1E6] mt-2">
+        <CardFooter className="pt-0 pb-3 flex flex-wrap gap-2 justify-end border-t border-slate-200 dark:border-slate-700 mt-2">
           {/* Comment form */}
           {showCommentForm && (
-            <div className="w-full mt-3 mb-3 bg-[#F8F9FA] p-3 rounded border border-[#DFE1E6]">
-              <h4 className="text-xs font-medium text-[#172B4D] dark:text-white mb-2 flex items-center">
+            <div className="w-full mt-3 mb-3 bg-slate-50 dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700">
+              <h4 className="text-xs font-medium text-slate-900 dark:text-white mb-2 flex items-center">
                 <MessageSquare size={12} className="mr-1" />
                 Add Comment
               </h4>
@@ -346,7 +356,7 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
               <div className="flex justify-end gap-2">
                 <Button 
                   size="sm" 
-                  className="bg-[#0052CC] hover:bg-[#0747A6] text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={handleAddComment}
                   disabled={!commentText.trim()}
                 >
@@ -354,7 +364,7 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
                 </Button>
                 <Button 
                   size="sm" 
-                  className="border border-[#DFE1E6] bg-white text-[#42526E]"
+                  className="border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                   onClick={() => setShowCommentForm(false)}
                 >
                   Cancel
@@ -365,8 +375,8 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
           
           {/* Commit ID form */}
           {showCommitForm && (
-            <div className="w-full mt-3 mb-3 bg-[#F8F9FA] p-3 rounded border border-[#DFE1E6]">
-              <h4 className="text-xs font-medium text-[#172B4D] dark:text-white mb-2 flex items-center">
+            <div className="w-full mt-3 mb-3 bg-slate-50 dark:bg-slate-800 p-3 rounded border border-slate-200 dark:border-slate-700">
+              <h4 className="text-xs font-medium text-slate-900 dark:text-white mb-2 flex items-center">
                 <GitCommit size={12} className="mr-1" />
                 Commit ID
               </h4>
@@ -381,14 +391,14 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
               <div className="flex justify-end gap-2">
                 <Button 
                   size="sm" 
-                  className="bg-[#0052CC] hover:bg-[#0747A6] text-white"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                   onClick={handleUpdateCommitId}
                 >
                   Save
                 </Button>
                 <Button 
                   size="sm" 
-                  className="border border-[#DFE1E6] bg-white text-[#42526E]"
+                  className="border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400"
                   onClick={() => setShowCommitForm(false)}
                 >
                   Cancel
@@ -396,8 +406,8 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
               </div>
               
               {task.commitId && (
-                <p className="text-xs mt-2 text-[#6B778C] dark:text-gray-400">
-                  Current commit: <span className="font-mono bg-[#DFE1E6] px-1 py-0.5 rounded">{task.commitId}</span>
+                <p className="text-xs mt-2 text-slate-500 dark:text-slate-400">
+                  Current commit: <span className="font-mono bg-slate-200 dark:bg-slate-700 px-1 py-0.5 rounded">{task.commitId}</span>
                 </p>
               )}
             </div>
@@ -406,7 +416,7 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
           {/* Action buttons */}
           <Button 
             size="sm" 
-            className="border border-[#DFE1E6] bg-white text-[#42526E] text-xs"
+            className="border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs"
             onClick={() => setShowCommentForm(!showCommentForm)}
           >
             <MessageSquare size={12} className="mr-1" />
@@ -415,7 +425,7 @@ const AITaskCard: React.FC<AITaskCardProps> = ({ task, onStatusChange }) => {
           
           <Button 
             size="sm" 
-            className="border border-[#DFE1E6] bg-white text-[#42526E] text-xs"
+            className="border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-400 text-xs"
             onClick={() => setShowCommitForm(!showCommitForm)}
           >
             <GitCommit size={12} className="mr-1" />

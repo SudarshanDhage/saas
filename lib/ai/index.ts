@@ -10,8 +10,6 @@ export { generateProjectStructure } from './project-generator';
 export { generateTechStack } from './tech-stack-generator';
 export { generateSprintPlan } from './sprint-plan-generator';
 export { generateFeatureImplementation } from './feature-implementation';
-export { generateDocumentation } from './documentation-generator';
-export { generateCostEstimation } from './cost-estimator';
 
 // JSON utilities
 export { repairJson, extractJsonFromText } from './json-utils';
