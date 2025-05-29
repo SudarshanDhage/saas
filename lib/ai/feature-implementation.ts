@@ -3,7 +3,7 @@ import { model } from './client';
 /**
  * Robust JSON extraction from text that may contain malformed JSON
  */
-function extractAndParseJson(text: string): any {
+function extractAndParseJson(text: string, featureName?: string): any {
   console.log("Raw AI response length:", text.length);
   console.log("Raw AI response:", text.substring(0, 500) + "...");
   
@@ -180,21 +180,79 @@ function extractAndParseJson(text: string): any {
     console.error("JSON repair failed:", repairError);
     console.log("Final cleaned JSON sample:", jsonString.substring(0, 1000));
     
-    // Last resort: try to extract just the feature object if it exists
+    // Last resort: try to extract more complete structure from truncated JSON
     try {
-      const featureMatch = jsonString.match(/"feature"\s*:\s*{[^}]*}/);
+      console.log("Attempting last-resort structured extraction...");
+      
+      // Try to extract major sections individually
+      const featureMatch = jsonString.match(/"feature"\s*:\s*{[^}]*(?:"[^"]*"[^}]*)*}/);
+      const developerMatch = jsonString.match(/"developerPlan"\s*:\s*{[\s\S]*?"tasks"\s*:\s*\[[^\]]*\]/);
+      const aiMatch = jsonString.match(/"aiPlan"\s*:\s*{[\s\S]*?"tasks"\s*:\s*\[[^\]]*\]/);
+      
+      // Build a partial response with whatever we can extract
+      let partialResponse: any = {
+        feature: {},
+        developerPlan: { tasks: [] },
+        aiPlan: { tasks: [] }
+      };
+      
+      // Extract feature data
       if (featureMatch) {
-        const simpleFeature = `{${featureMatch[0]}}`;
-        const parsed = JSON.parse(simpleFeature);
-        console.log("Extracted minimal feature object");
-        return {
-          feature: parsed.feature,
-          developerPlan: { tasks: [] },
-          aiPlan: { tasks: [] }
-        };
+        try {
+          const featureJson = `{${featureMatch[0]}}`;
+          const featureParsed = JSON.parse(featureJson);
+          partialResponse.feature = featureParsed.feature;
+          console.log("✓ Extracted feature object");
+        } catch (e) {
+          // Use minimal feature
+          partialResponse.feature = {
+            title: featureName,
+            description: `Implementation plan for ${featureName}. This response was partially recovered from a truncated AI response.`,
+            complexity: "moderate",
+            estimatedTotalHours: "40-60 hours"
+          };
+        }
       }
+      
+      // Try to extract any task data we can find
+      const taskMatches = jsonString.match(/"tasks"\s*:\s*\[[\s\S]*?\]/g);
+      if (taskMatches && taskMatches.length > 0) {
+        for (const taskMatch of taskMatches) {
+          try {
+            // Clean up the task match to be valid JSON
+            let cleanTaskMatch = taskMatch.replace(/^.*"tasks"\s*:\s*/, '');
+            const taskJson = `{"tasks":${cleanTaskMatch}}`;
+            const taskParsed = JSON.parse(taskJson);
+            
+            if (taskParsed.tasks && taskParsed.tasks.length > 0) {
+              // Determine if this is developer or AI tasks based on content
+              const firstTask = taskParsed.tasks[0];
+              if (firstTask.type && (firstTask.type.includes('database') || firstTask.type.includes('backend') || firstTask.type.includes('frontend'))) {
+                partialResponse.developerPlan.tasks = taskParsed.tasks;
+                partialResponse.developerPlan.totalEstimatedHours = "40+ hours";
+                partialResponse.developerPlan.skillLevel = "intermediate";
+                console.log("✓ Extracted developer tasks");
+              } else if (firstTask.aiPrompt || firstTask.type.includes('ai') || firstTask.type.includes('full-stack')) {
+                partialResponse.aiPlan.tasks = taskParsed.tasks;
+                partialResponse.aiPlan.totalEstimatedHours = "24+ hours";
+                partialResponse.aiPlan.approach = "end-to-end";
+                console.log("✓ Extracted AI tasks");
+              }
+            }
+          } catch (e) {
+            // Skip this task match
+          }
+        }
+      }
+      
+      // If we got any useful data, return it
+      if (partialResponse.feature.title || partialResponse.developerPlan.tasks.length > 0 || partialResponse.aiPlan.tasks.length > 0) {
+        console.log("Successfully extracted partial structured data");
+        return partialResponse;
+      }
+      
     } catch (e) {
-      // Ignore this attempt
+      console.log("Structured extraction also failed");
     }
     
     throw new Error("Unable to parse AI response as valid JSON");
@@ -1668,7 +1726,7 @@ export async function generateFeatureImplementation(feature: string) {
     const text = response.text();
     
     try {
-      const parsedData = extractAndParseJson(text);
+      const parsedData = extractAndParseJson(text, feature);
       
       // Enhanced validation for comprehensive implementation plans
       if (!parsedData.feature || !parsedData.developerPlan || !parsedData.aiPlan) {
