@@ -272,6 +272,8 @@ const SprintPlanView: React.FC<SprintPlanViewProps> = ({ sprintPlan }) => {
                     totalSprints={sprints.length}
                     onPrevious={handlePreviousSprint}
                     onNext={handleNextSprint}
+                    sprint={currentSprint}
+                    projectAnalysis={sprintPlan.developerPlan?.projectAnalysis}
                   />
                   
                   {/* Use our EnhancedJiraBoard component */}
@@ -301,6 +303,8 @@ const SprintPlanView: React.FC<SprintPlanViewProps> = ({ sprintPlan }) => {
                     totalSprints={sprints.length}
                     onPrevious={handlePreviousSprint}
                     onNext={handleNextSprint}
+                    sprint={currentSprint}
+                    projectAnalysis={sprintPlan.aiPlan?.projectAnalysis}
                   />
                   
                   {/* AI Assistant Tasks - Different view that emphasizes the prompts */}

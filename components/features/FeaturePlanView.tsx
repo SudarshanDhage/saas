@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { SingleFeaturePlan } from '@/lib/firestore-v2'
-import { Clock, User, Bot, CheckCircle, AlertCircle, Target } from 'lucide-react'
+import { Clock, User, Bot, CheckCircle, AlertCircle, Target, Code, Database } from 'lucide-react'
 import { Column, Task } from '@/components/board/types'
 import { 
   loadFeatureTaskStates, 
@@ -76,13 +76,14 @@ function createFeatureColumns(tasks: Task[]): Column[] {
   ]
 }
 
-// Feature info card component
+// Feature info card component with enhanced information display
 const FeatureInfoCard: React.FC<{
   featureTitle: string
   featureDescription: string
   totalTasks: number
   estimatedHours?: number
-}> = ({ featureTitle, featureDescription, totalTasks, estimatedHours }) => {
+  feature?: any
+}> = ({ featureTitle, featureDescription, totalTasks, estimatedHours, feature }) => {
   return (
     <Card className="mb-6 border-l-4 border-l-blue-600 dark:border-l-blue-400">
       <CardContent className="p-6">
@@ -93,6 +94,140 @@ const FeatureInfoCard: React.FC<{
               {featureTitle}
             </h4>
             <p className="text-slate-600 dark:text-slate-300 mb-4">{featureDescription}</p>
+            
+            {/* Enhanced feature specifications */}
+            {feature && (
+              <div className="space-y-4 mb-4">
+                {/* Technical Specifications */}
+                {feature.technicalSpecifications && (
+                  <div>
+                    <h5 className="text-sm font-medium text-slate-900 dark:text-white mb-2 flex items-center">
+                      <Code size={16} className="mr-2 text-green-600 dark:text-green-400" />
+                      Technical Specifications
+                    </h5>
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
+                      {feature.technicalSpecifications.databaseDesign && (
+                        <div className="mb-2">
+                          <span className="text-xs font-medium text-blue-700 dark:text-blue-300">Database:</span>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{feature.technicalSpecifications.databaseDesign}</p>
+                        </div>
+                      )}
+                      {feature.technicalSpecifications.apiEndpoints && (
+                        <div className="mb-2">
+                          <span className="text-xs font-medium text-green-700 dark:text-green-300">API Endpoints:</span>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{feature.technicalSpecifications.apiEndpoints}</p>
+                        </div>
+                      )}
+                      {feature.technicalSpecifications.frontendComponents && (
+                        <div>
+                          <span className="text-xs font-medium text-purple-700 dark:text-purple-300">Frontend Components:</span>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{feature.technicalSpecifications.frontendComponents}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Architecture Overview */}
+                {feature.architecture && (
+                  <div>
+                    <h5 className="text-sm font-medium text-slate-900 dark:text-white mb-2 flex items-center">
+                      <Database size={16} className="mr-2 text-purple-600 dark:text-purple-400" />
+                      Architecture Overview
+                    </h5>
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
+                      {feature.architecture.dataFlow && (
+                        <div className="mb-2">
+                          <span className="text-xs font-medium text-indigo-700 dark:text-indigo-300">Data Flow:</span>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{feature.architecture.dataFlow}</p>
+                        </div>
+                      )}
+                      {feature.architecture.components && Array.isArray(feature.architecture.components) && (
+                        <div className="mb-2">
+                          <span className="text-xs font-medium text-cyan-700 dark:text-cyan-300">Components:</span>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {feature.architecture.components.map((component: string, index: number) => (
+                              <span key={index} className="px-2 py-1 text-xs bg-cyan-100 dark:bg-cyan-900/30 text-cyan-700 dark:text-cyan-300 rounded">
+                                {component}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      {feature.architecture.integrations && Array.isArray(feature.architecture.integrations) && (
+                        <div>
+                          <span className="text-xs font-medium text-orange-700 dark:text-orange-300">Integrations:</span>
+                          <div className="mt-1 flex flex-wrap gap-1">
+                            {feature.architecture.integrations.map((integration: string, index: number) => (
+                              <span key={index} className="px-2 py-1 text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded">
+                                {integration}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Implementation Complexity */}
+                {feature.complexity && (
+                  <div>
+                    <h5 className="text-sm font-medium text-slate-900 dark:text-white mb-2 flex items-center">
+                      <AlertCircle size={16} className="mr-2 text-yellow-600 dark:text-yellow-400" />
+                      Implementation Complexity
+                    </h5>
+                    <div className="bg-slate-50 dark:bg-slate-800 rounded-md p-3">
+                      <div className="grid grid-cols-2 gap-3 text-xs">
+                        {feature.complexity.level && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-600 dark:text-slate-400">Level:</span>
+                            <span className={`font-medium ${
+                              feature.complexity.level === 'simple' ? 'text-green-600 dark:text-green-400' :
+                              feature.complexity.level === 'moderate' ? 'text-yellow-600 dark:text-yellow-400' :
+                              feature.complexity.level === 'complex' ? 'text-orange-600 dark:text-orange-400' :
+                              'text-red-600 dark:text-red-400'
+                            }`}>
+                              {feature.complexity.level}
+                            </span>
+                          </div>
+                        )}
+                        {feature.complexity.estimatedDuration && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-600 dark:text-slate-400">Duration:</span>
+                            <span className="font-medium text-slate-900 dark:text-white">{feature.complexity.estimatedDuration}</span>
+                          </div>
+                        )}
+                        {feature.complexity.teamSize && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-600 dark:text-slate-400">Team Size:</span>
+                            <span className="font-medium text-slate-900 dark:text-white">{feature.complexity.teamSize}</span>
+                          </div>
+                        )}
+                        {feature.complexity.riskLevel && (
+                          <div className="flex justify-between">
+                            <span className="text-slate-600 dark:text-slate-400">Risk:</span>
+                            <span className={`font-medium ${
+                              feature.complexity.riskLevel === 'low' ? 'text-green-600 dark:text-green-400' :
+                              feature.complexity.riskLevel === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                              'text-red-600 dark:text-red-400'
+                            }`}>
+                              {feature.complexity.riskLevel}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {feature.complexity.considerations && (
+                        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
+                          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Key Considerations:</span>
+                          <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{feature.complexity.considerations}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
             
             <div className="flex items-center space-x-6">
               <div className="flex items-center">
@@ -315,6 +450,7 @@ const FeaturePlanView: React.FC<FeaturePlanViewProps> = ({ featurePlan }) => {
               featureDescription={featurePlan.feature.description}
               totalTasks={featurePlan.developerPlan?.tasks?.length || 0}
               estimatedHours={totalEstimatedHours}
+              feature={featurePlan.feature}
             />
                   
             {isLoading ? (
@@ -346,6 +482,7 @@ const FeaturePlanView: React.FC<FeaturePlanViewProps> = ({ featurePlan }) => {
               featureTitle={featurePlan.feature.title}
               featureDescription={featurePlan.feature.description}
               totalTasks={featurePlan.aiPlan?.tasks?.length || 0}
+              feature={featurePlan.feature}
             />
             
             {isLoading ? (

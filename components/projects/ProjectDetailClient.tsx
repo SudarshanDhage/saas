@@ -246,34 +246,169 @@ const ProjectDetailClient: React.FC<ProjectDetailClientProps> = ({ projectId }) 
                   <CardHeader>
                     <CardTitle>Technology Stack</CardTitle>
                     <CardDescription>
-                      Selected technologies for this project
+                      Selected technologies with detailed analysis
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
-                      {project.techStack && Object.entries(project.techStack).map(([category, tech]: [string, any]) => (
-                        <div key={category}>
-                          <div className="flex items-center mb-2">
-                            {techStackIcons[category] || <Code size={20} className="text-slate-900 dark:text-white" />}
-                            <h4 className="text-sm font-medium text-slate-900 dark:text-white ml-2 capitalize">
-                              {category}
+                      {project.techStack && Object.entries(project.techStack).map(([category, tech]: [string, any]) => {
+                        // Handle both old format (single tech) and new format (array of options)
+                        const techOption = Array.isArray(tech) ? tech.find(t => t.recommended) || tech[0] : tech;
+                        
+                        return (
+                          <div key={category}>
+                            <div className="flex items-center mb-2">
+                              {techStackIcons[category] || <Code size={20} className="text-slate-900 dark:text-white" />}
+                              <h4 className="text-sm font-medium text-slate-900 dark:text-white ml-2 capitalize">
+                                {category.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                              </h4>
+                            </div>
+                            <Card className="border-l-4 border-l-blue-600 dark:border-l-blue-400">
+                              <CardContent className="p-4">
+                                <div className="flex items-center justify-between mb-2">
+                                  <h5 className="text-sm font-medium text-slate-900 dark:text-white">{techOption.name}</h5>
+                                  <div className="flex items-center space-x-1">
+                                    {techOption.recommended && (
+                                      <span className="px-2 py-0.5 text-[10px] bg-yellow-600 dark:bg-yellow-500 text-white rounded-full">
+                                        Recommended
+                                      </span>
+                                    )}
+                                    {techOption.fitScore && (
+                                      <span className="px-2 py-0.5 text-[10px] bg-green-600 dark:bg-green-500 text-white rounded-full">
+                                        {techOption.fitScore}% fit
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                
+                                <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">{techOption.reason}</p>
+                                
+                                {/* Comprehensive tech analysis */}
+                                {(techOption.learningCurve || techOption.scalability || techOption.cost || techOption.performance) && (
+                                  <div className="grid grid-cols-2 gap-2 text-xs">
+                                    {techOption.learningCurve && (
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-600 dark:text-slate-400">Learning:</span>
+                                        <span className={`font-medium ${
+                                          techOption.learningCurve === 'beginner' ? 'text-green-600 dark:text-green-400' :
+                                          techOption.learningCurve === 'intermediate' ? 'text-yellow-600 dark:text-yellow-400' :
+                                          'text-red-600 dark:text-red-400'
+                                        }`}>
+                                          {techOption.learningCurve}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {techOption.scalability && (
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-600 dark:text-slate-400">Scale:</span>
+                                        <span className={`font-medium ${
+                                          techOption.scalability === 'high' || techOption.scalability === 'enterprise' ? 'text-green-600 dark:text-green-400' :
+                                          techOption.scalability === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                          'text-red-600 dark:text-red-400'
+                                        }`}>
+                                          {techOption.scalability}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {techOption.cost && (
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-600 dark:text-slate-400">Cost:</span>
+                                        <span className={`font-medium ${
+                                          techOption.cost === 'free' ? 'text-green-600 dark:text-green-400' :
+                                          techOption.cost === 'low' ? 'text-blue-600 dark:text-blue-400' :
+                                          techOption.cost === 'medium' ? 'text-yellow-600 dark:text-yellow-400' :
+                                          'text-red-600 dark:text-red-400'
+                                        }`}>
+                                          {techOption.cost}
+                                        </span>
+                                      </div>
+                                    )}
+                                    {techOption.performance && (
+                                      <div className="flex justify-between">
+                                        <span className="text-slate-600 dark:text-slate-400">Performance:</span>
+                                        <span className={`font-medium ${
+                                          techOption.performance === 'excellent' || techOption.performance === 'exceptional' ? 'text-green-600 dark:text-green-400' :
+                                          techOption.performance === 'good' ? 'text-blue-600 dark:text-blue-400' :
+                                          'text-yellow-600 dark:text-yellow-400'
+                                        }`}>
+                                          {techOption.performance}
+                                        </span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Best for and considerations */}
+                                {(techOption.bestFor || techOption.considerations) && (
+                                  <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700">
+                                    {techOption.bestFor && (
+                                      <div className="mb-2">
+                                        <span className="text-xs font-medium text-green-700 dark:text-green-300">Best for:</span>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{techOption.bestFor}</p>
+                                      </div>
+                                    )}
+                                    {techOption.considerations && (
+                                      <div>
+                                        <span className="text-xs font-medium text-orange-700 dark:text-orange-300">Consider:</span>
+                                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">{techOption.considerations}</p>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </div>
+                        );
+                      })}
+                      
+                      {/* Additional Tools Section */}
+                      {project.techStack?.additionalTools && Array.isArray(project.techStack.additionalTools) && (
+                        <div className="mt-6 pt-6 border-t border-slate-200 dark:border-slate-700">
+                          <div className="flex items-center mb-3">
+                            <Code size={20} className="text-purple-600 dark:text-purple-400" />
+                            <h4 className="text-sm font-medium text-slate-900 dark:text-white ml-2">
+                              Additional Tools & Services
                             </h4>
                           </div>
-                          <Card className="border-l-4 border-l-blue-600 dark:border-l-blue-400">
-                            <CardContent className="p-4">
-                              <div className="flex items-center justify-between">
-                                <h5 className="text-sm font-medium text-slate-900 dark:text-white">{tech.name}</h5>
-                                {tech.recommended && (
-                                  <span className="ml-2 px-2 py-0.5 text-[10px] bg-yellow-600 dark:bg-yellow-500 text-white rounded-full">
-                                    Recommended
-                                  </span>
-                                )}
-                              </div>
-                              <p className="text-xs text-slate-500 dark:text-slate-400">{tech.reason}</p>
-                            </CardContent>
-                          </Card>
+                          <div className="grid grid-cols-1 gap-2">
+                            {project.techStack.additionalTools.map((tool: any, index: number) => (
+                              <Card key={index} className="border-l-4 border-l-purple-600 dark:border-l-purple-400">
+                                <CardContent className="p-3">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <div className="flex items-center">
+                                      <span className="text-xs font-medium text-slate-900 dark:text-white">
+                                        {tool.name}
+                                      </span>
+                                      {tool.category && (
+                                        <span className="ml-2 px-1.5 py-0.5 text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400 rounded">
+                                          {tool.category}
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center space-x-1">
+                                      {tool.priority && (
+                                        <span className={`px-1.5 py-0.5 text-[9px] rounded ${
+                                          tool.priority === 'critical' ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400' :
+                                          tool.priority === 'important' ? 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400' :
+                                          'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
+                                        }`}>
+                                          {tool.priority}
+                                        </span>
+                                      )}
+                                      {tool.implementationPhase && (
+                                        <span className="px-1.5 py-0.5 text-[9px] bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded">
+                                          {tool.implementationPhase}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <p className="text-xs text-slate-500 dark:text-slate-400">{tool.reason}</p>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </CardContent>
                 </Card>
