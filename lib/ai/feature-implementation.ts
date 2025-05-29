@@ -10,11 +10,8 @@ function extractAndParseJson(text: string): any {
   // Find the first complete JSON object
   let jsonStart = -1;
   let jsonEnd = -1;
-  let braceCount = 0;
-  let inString = false;
-  let escapeNext = false;
   
-  // Find the start of JSON
+  // Find the start of JSON - look for opening brace
   for (let i = 0; i < text.length; i++) {
     if (text[i] === '{') {
       jsonStart = i;
@@ -26,7 +23,11 @@ function extractAndParseJson(text: string): any {
     throw new Error("No JSON object found in response");
   }
   
-  // Find the end of JSON by counting braces
+  // Find the end by counting braces and handling strings properly
+  let braceCount = 0;
+  let inString = false;
+  let escapeNext = false;
+  
   for (let i = jsonStart; i < text.length; i++) {
     const char = text[i];
     
@@ -58,13 +59,44 @@ function extractAndParseJson(text: string): any {
     }
   }
   
+  // If we couldn't find a complete JSON, try to construct one from what we have
   if (jsonEnd === -1) {
-    console.log("JSON appears to be truncated, trying to find partial structure...");
-    // If we can't find the end, try to use the last closing brace we can find
-    jsonEnd = text.lastIndexOf('}');
-    if (jsonEnd <= jsonStart) {
-      throw new Error("Malformed JSON: cannot find proper end");
+    console.log("JSON appears to be truncated, attempting reconstruction...");
+    
+    // Find the last occurrence of a quote to see if we're in the middle of a string
+    const lastQuote = text.lastIndexOf('"');
+    const lastComma = text.lastIndexOf(',');
+    const lastCloseBrace = text.lastIndexOf('}');
+    
+    // Try to truncate at a safe point
+    let safeEnd = Math.min(text.length - 1, Math.max(lastQuote, lastComma, lastCloseBrace));
+    
+    // If we're in the middle of a string value, close it
+    let truncatedText = text.substring(jsonStart, safeEnd + 1);
+    
+    // Count unmatched braces and brackets
+    const openBraces = (truncatedText.match(/\{/g) || []).length;
+    const closeBraces = (truncatedText.match(/\}/g) || []).length;
+    const openBrackets = (truncatedText.match(/\[/g) || []).length;
+    const closeBrackets = (truncatedText.match(/\]/g) || []).length;
+    
+    // If the last character isn't a quote and we have unmatched quotes, add one
+    if (!truncatedText.endsWith('"') && !truncatedText.endsWith(',') && !truncatedText.endsWith('}')) {
+      truncatedText += '"';
     }
+    
+    // Close any unmatched brackets
+    if (openBrackets > closeBrackets) {
+      truncatedText += ']'.repeat(openBrackets - closeBrackets);
+    }
+    
+    // Close any unmatched braces
+    if (openBraces > closeBraces) {
+      truncatedText += '}'.repeat(openBraces - closeBraces);
+    }
+    
+    jsonEnd = truncatedText.length - 1;
+    text = text.substring(0, jsonStart) + truncatedText;
   }
   
   let jsonString = text.substring(jsonStart, jsonEnd + 1);
@@ -77,54 +109,94 @@ function extractAndParseJson(text: string): any {
     console.log("JSON parsed successfully");
     return parsed;
   } catch (error) {
-    console.log("Direct parsing failed, attempting repair...");
+    console.log("Direct parsing failed, attempting advanced repair...");
   }
   
-  // Enhanced JSON cleaning and repair
+  // Advanced JSON cleaning and repair
   try {
-    // Clean common issues
-    jsonString = jsonString
+    // Clean common issues step by step
+    let cleanedJson = jsonString
       // Remove any markdown code blocks
       .replace(/```json|```/g, '')
+      // Remove any trailing text after the last }
+      .replace(/}[^}]*$/, '}')
       // Fix unquoted property names
       .replace(/([{,]\s*)([a-zA-Z0-9_$]+)(\s*:)/g, '$1"$2"$3')
       // Fix trailing commas
-      .replace(/,\s*([}\]])/g, '$1')
-      // Fix missing commas between objects (but be careful not to break strings)
+      .replace(/,(\s*[}\]])/g, '$1')
+      // Fix missing commas between objects
       .replace(/}(\s*){/g, '},\n$1{')
       // Fix missing commas between array items
       .replace(/](\s*)\[/g, '],\n$1[')
-      // Replace single quotes with double quotes (but be careful in strings)
-      .replace(/'/g, '"')
       // Fix double commas
       .replace(/,,+/g, ',')
       // Fix spaces around colons
-      .replace(/"\s*:\s*/g, '": ')
-      // Remove extra whitespace but preserve structure
-      .replace(/\n\s*\n/g, '\n')
-      .trim();
+      .replace(/"\s*:\s*/g, '": ');
     
-    // Balance brackets
-    const openBraces = (jsonString.match(/\{/g) || []).length;
-    const closeBraces = (jsonString.match(/\}/g) || []).length;
+    // Handle truncated string values by finding unclosed quotes
+    const lines = cleanedJson.split('\n');
+    const fixedLines = lines.map((line, index) => {
+      // Count quotes in this line
+      const quotes = (line.match(/"/g) || []).length;
+      
+      // If odd number of quotes and this is not the last line, we might have a truncated string
+      if (quotes % 2 === 1 && index < lines.length - 1) {
+        // Check if the line ends with an unfinished string
+        if (line.includes(':') && !line.trim().endsWith('"') && !line.trim().endsWith(',')) {
+          return line + '"';
+        }
+      }
+      
+      return line;
+    });
+    
+    cleanedJson = fixedLines.join('\n');
+    
+    // Final bracket balancing
+    const openBraces = (cleanedJson.match(/\{/g) || []).length;
+    const closeBraces = (cleanedJson.match(/\}/g) || []).length;
     if (openBraces > closeBraces) {
-      jsonString += '}'.repeat(openBraces - closeBraces);
+      cleanedJson += '}'.repeat(openBraces - closeBraces);
     }
     
-    const openBrackets = (jsonString.match(/\[/g) || []).length;
-    const closeBrackets = (jsonString.match(/\]/g) || []).length;
+    const openBrackets = (cleanedJson.match(/\[/g) || []).length;
+    const closeBrackets = (cleanedJson.match(/\]/g) || []).length;
     if (openBrackets > closeBrackets) {
-      jsonString += ']'.repeat(openBrackets - closeBrackets);
+      cleanedJson += ']'.repeat(openBrackets - closeBrackets);
     }
     
-    // Try parsing again
-    const parsed = JSON.parse(jsonString);
+    // Remove any content after the last closing brace
+    const lastBrace = cleanedJson.lastIndexOf('}');
+    if (lastBrace !== -1 && lastBrace < cleanedJson.length - 1) {
+      cleanedJson = cleanedJson.substring(0, lastBrace + 1);
+    }
+    
+    console.log("Attempting to parse repaired JSON...");
+    const parsed = JSON.parse(cleanedJson);
     console.log("JSON repair successful");
     return parsed;
     
   } catch (repairError) {
     console.error("JSON repair failed:", repairError);
-    console.log("Cleaned JSON sample:", jsonString.substring(0, 1000));
+    console.log("Final cleaned JSON sample:", jsonString.substring(0, 1000));
+    
+    // Last resort: try to extract just the feature object if it exists
+    try {
+      const featureMatch = jsonString.match(/"feature"\s*:\s*{[^}]*}/);
+      if (featureMatch) {
+        const simpleFeature = `{${featureMatch[0]}}`;
+        const parsed = JSON.parse(simpleFeature);
+        console.log("Extracted minimal feature object");
+        return {
+          feature: parsed.feature,
+          developerPlan: { tasks: [] },
+          aiPlan: { tasks: [] }
+        };
+      }
+    } catch (e) {
+      // Ignore this attempt
+    }
+    
     throw new Error("Unable to parse AI response as valid JSON");
   }
 }
@@ -1459,416 +1531,136 @@ This implementation provides a complete, production-ready solution that includes
 export async function generateFeatureImplementation(feature: string) {
   try {
     const prompt = `
-    🚀 ULTRA-COMPREHENSIVE FEATURE IMPLEMENTATION BLUEPRINT GENERATION 🚀
+    🚀 FEATURE IMPLEMENTATION PLAN GENERATOR 🚀
 
     FEATURE TO IMPLEMENT: "${feature}"
 
-    ⚠️ CRITICAL REQUIREMENT: You MUST provide EXTREMELY DETAILED, COMPLETE implementation guidance that covers EVERY SINGLE ASPECT from A to Z. This is NOT a basic overview - this is a COMPLETE BLUEPRINT for building a production-ready feature.
+    Generate a comprehensive implementation plan for this feature. Focus on practical, actionable tasks.
 
-    🎯 MANDATORY DETAIL LEVEL:
-    - Include COMPLETE CODE EXAMPLES for every component
-    - Provide EXACT FILE CONTENTS with full implementations
-    - Include ALL necessary imports, dependencies, and configurations
-    - Specify EVERY COMMAND needed to set up and run the feature
-    - Cover ALL edge cases, error scenarios, and user interactions
-    - Include COMPREHENSIVE testing strategies and actual test code
-    - Provide COMPLETE deployment and monitoring setup
-
-    📋 COMPREHENSIVE ANALYSIS REQUIREMENTS:
-    1. COMPLETE FEATURE BREAKDOWN:
-       - Analyze EVERY possible user interaction with this feature
-       - Map out ALL data flows, inputs, outputs, and transformations
-       - Identify ALL edge cases, error scenarios, and validation requirements
-       - Define ALL business rules, constraints, and requirements
-       - Identify ALL integration points and dependencies
-       - Consider ALL performance, security, and scalability implications
-
-    2. COMPLETE TECHNICAL ARCHITECTURE:
-       - FULL database schema design with tables, relationships, indexes, constraints
-       - COMPLETE API endpoint specifications with request/response schemas
-       - DETAILED frontend component hierarchy and data flow
-       - COMPREHENSIVE state management patterns and data structures
-       - COMPLETE authentication and authorization requirements
-       - DETAILED caching strategies and performance optimizations
-       - COMPREHENSIVE error handling and logging mechanisms
-       - COMPLETE testing strategies at all levels
-
-    3. COMPLETE IMPLEMENTATION COVERAGE:
-       - EVERY file that needs to be created or modified with FULL CONTENT
-       - EVERY function, component, and module with COMPLETE IMPLEMENTATIONS
-       - ALL external libraries and dependencies with installation commands
-       - ALL environment variables and configuration requirements
-       - COMPLETE database migrations and seed data
-       - DETAILED API documentation and testing procedures
-       - COMPREHENSIVE frontend styling and responsive design
-       - COMPLETE security implementations and validation rules
-
-    💡 TASK GENERATION REQUIREMENTS:
-
-    🔧 DEVELOPER IMPLEMENTATION PLAN:
-    - Create 8-15 EXTREMELY detailed tasks covering every aspect
-    - Each task MUST include COMPLETE technical specifications
-    - Provide EXACT file paths, folder structures, and naming conventions
-    - Include DETAILED step-by-step implementation with CODE EXAMPLES
-    - Specify ALL dependencies, prerequisites, and setup requirements
-    - Include COMPREHENSIVE testing procedures with actual test code
-    - Provide EXACT commands, configurations, and deployment steps
-
-    🤖 AI IMPLEMENTATION PLAN:
-    - Create 5-10 COMPREHENSIVE AI-ready tasks
-    - Each AI prompt MUST be EXTREMELY detailed and self-contained
-    - Include COMPLETE context, requirements, and expected outcomes
-    - Specify EXACT file contents, component structures, and styling
-    - Include COMPREHENSIVE error handling and edge case management
-    - Provide COMPLETE testing scenarios and validation criteria
-    - Include DETAILED deployment and integration instructions
-
-    ⭐ EXTREME DETAIL REQUIREMENTS (MANDATORY):
-    - Include COMPLETE file contents for every file mentioned
-    - Provide FULL code examples and working implementations
-    - Specify ALL environment setup and configuration steps
-    - Include ALL necessary imports, dependencies, and package installations
-    - Provide COMPLETE database schemas with actual SQL/Prisma code
-    - Include COMPREHENSIVE styling guides with actual CSS/Tailwind code
-    - Specify COMPLETE testing procedures with actual test code
-    - Include DETAILED troubleshooting guides with common solutions
-
-    🔍 COMPREHENSIVE COVERAGE AREAS (ALL REQUIRED):
-    1. Database Design & Complete Schema Implementation
-    2. Backend API Development with Full Code
-    3. Frontend Component Development with Complete Code
-    4. State Management & Data Flow Implementation
-    5. Authentication & Authorization Complete Setup
-    6. Validation & Error Handling with Full Code
-    7. Testing & Quality Assurance with Test Code
-    8. Performance Optimization Implementation
-    9. Security Implementation with Code Examples
-    10. Deployment & DevOps Complete Configuration
-    11. Monitoring & Logging Setup
-    12. Documentation & Maintenance Guides
-    13. User Experience & Design Implementation
-    14. Integration & Communication Setup
-    15. Scalability & Future-proofing Implementation
-
-    📊 JSON FORMATTING REQUIREMENTS:
+    📊 REQUIREMENTS:
     - Output ONLY valid JSON (no explanations before/after)
     - Start with { and end with }
     - Use double quotes for ALL keys and strings
     - NO trailing commas or comments
-    - Proper array/object closure
 
-    🏗️ REQUIRED JSON STRUCTURE WITH COMPLETE DETAILS:
+    🏗️ REQUIRED JSON STRUCTURE:
+
 {
   "feature": {
-        "title": "Comprehensive feature title that clearly describes the functionality",
-        "description": "EXTREMELY detailed feature description (300+ words) covering all aspects: user interactions, business value, technical considerations, user flows, data requirements, integration points, performance expectations, security needs, and scalability considerations",
-        "complexity": "simple/moderate/complex/very-complex",
-        "estimatedTotalHours": "Realistic total implementation time (e.g., '60-80 hours')",
-        "prerequisites": [
-          "COMPLETE list of technologies, skills, and setup requirements",
-          "Node.js 18+, TypeScript, React, Next.js, Prisma, PostgreSQL",
-          "Understanding of RESTful APIs, state management, and testing",
-          "Development environment with code editor and Git",
-          "And ALL other specific requirements..."
-        ],
-        "userStories": [
-          "COMPREHENSIVE user stories covering ALL user types and scenarios",
-          "As a user, I want to [specific action] so that [specific benefit]",
-          "As an admin, I want to [management capability] so that [control outcome]",
-          "Include stories for ALL user roles and edge cases..."
-        ],
-        "technicalRequirements": [
-          "DETAILED technical requirements with specific metrics",
-          "Responsive design supporting mobile, tablet, desktop (320px to 1920px+)",
-          "API response times under 200ms for 95% of requests",
-          "Database query optimization with proper indexing",
-          "Include ALL performance, scalability, and technical specs..."
-        ],
-        "businessRequirements": [
-          "COMPLETE business logic and rules with examples",
-          "User authentication and role-based access control",
-          "Data validation and integrity requirements",
-          "Audit logging for compliance and tracking",
-          "Include ALL business rules and constraints..."
-        ],
-        "integrationRequirements": [
-          "ALL external services and API integrations needed",
-          "Authentication service integration (Auth0, Firebase, custom)",
-          "Email service for notifications (SendGrid, Mailgun, etc.)",
-          "File storage integration (AWS S3, Cloudinary, etc.)",
-          "Include ALL integration points and dependencies..."
-        ],
-        "performanceRequirements": [
-          "SPECIFIC performance metrics and optimization needs",
-          "Page load times under 1.5 seconds on 3G networks",
-          "Bundle size optimization (< 300KB initial load)",
-          "Database query optimization with sub-100ms response times",
-          "Include ALL performance targets and optimization strategies..."
-        ],
-        "securityRequirements": [
-          "COMPLETE security considerations and implementations",
-          "Input validation and sanitization for all user inputs",
-          "XSS and CSRF protection with proper headers and tokens",
-          "SQL injection prevention with parameterized queries",
-          "Authentication token security and refresh mechanisms",
-          "Include ALL security measures and implementation details..."
-        ],
-        "scalabilityConsiderations": [
-          "DETAILED future growth and scaling requirements",
-          "Horizontal scaling capability with load balancing",
-          "Database optimization for millions of records",
-          "Caching strategies for high-traffic scenarios",
-          "Microservices architecture readiness",
-          "Include ALL scalability planning and implementation..."
-        ]
+    "title": "Clear, descriptive title of the feature",
+    "description": "Detailed description (200+ words) of what this feature does, how users interact with it, technical requirements, and business value. Include user flows, data requirements, integration points, and key functionality.",
+    "complexity": "simple/moderate/complex/very-complex",
+    "estimatedTotalHours": "Realistic time estimate (e.g., '40-60 hours')",
+    "prerequisites": [
+      "Required technologies and setup",
+      "Node.js, TypeScript, React, Next.js",
+      "Database setup (PostgreSQL/MongoDB)",
+      "Development environment"
+    ],
+    "userStories": [
+      "As a user, I want to [action] so that [benefit]",
+      "As an admin, I want to [action] so that [benefit]",
+      "Include 3-5 key user stories"
+    ],
+    "technicalRequirements": [
+      "Responsive design for all devices",
+      "API response times under 500ms",
+      "Real-time data validation",
+      "Error handling and logging"
+    ],
+    "businessRequirements": [
+      "User authentication required",
+      "Data validation and integrity",
+      "Audit logging for compliance",
+      "Scalable architecture"
+    ]
   },
   "developerPlan": {
-        "totalEstimatedHours": "Sum of all task hours (e.g., '75 hours')",
-        "skillLevel": "intermediate",
-        "architecture": {
-          "databaseSchema": "COMPLETE database design with exact table structures, relationships, indexes, constraints, and sample data. Include full Prisma schema or SQL DDL statements.",
-          "apiEndpoints": "ALL REST/GraphQL endpoints with FULL specifications: HTTP methods, request/response schemas, authentication requirements, error codes, rate limiting, and example requests/responses.",
-          "componentHierarchy": "DETAILED frontend component structure with component tree, props interfaces, state management flow, and component interaction patterns.",
-          "stateManagement": "COMPREHENSIVE state management implementation with store structure, action creators, reducers, selectors, and data flow diagrams.",
-          "authenticationFlow": "COMPLETE auth implementation with login/logout flows, token management, protected routes, role-based access, and security considerations.",
-          "deploymentArchitecture": "FULL deployment structure with Docker configurations, CI/CD pipelines, environment management, monitoring setup, and infrastructure requirements."
-        },
-        "environment": {
-          "technologies": [
-            "COMPLETE list with versions",
-            "React 18.2+, Next.js 13+, TypeScript 5+, Tailwind CSS 3+",
-            "Node.js 18+, Express 4+, Prisma 5+, PostgreSQL 15+",
-            "Jest 29+, Playwright 1.30+, Docker 20+",
-            "Include ALL technologies with specific versions..."
-          ],
-          "dependencies": [
-            "ALL package dependencies with exact versions",
-            "react@18.2.0, next@13.4.0, typescript@5.0.0",
-            "prisma@5.0.0, @prisma/client@5.0.0, zod@3.21.0",
-            "react-hook-form@7.44.0, @tanstack/react-query@4.29.0",
-            "Include ALL dependencies with installation commands..."
-          ],
-          "environmentVariables": [
-            "ALL environment variables with descriptions and examples",
-            "DATABASE_URL - PostgreSQL connection string (postgresql://user:pass@host:port/db)",
-            "NEXTAUTH_SECRET - Secret key for NextAuth (32+ character random string)",
-            "API_BASE_URL - Base URL for API calls (http://localhost:3000/api)",
-            "Include ALL env vars with detailed descriptions..."
-          ],
-          "setupCommands": [
-            "EXACT commands to set up the development environment",
-            "npm install or yarn install",
-            "npx prisma generate && npx prisma db push",
-            "npm run dev",
-            "Include ALL setup steps with explanations..."
-          ],
-          "databaseSetup": [
-            "COMPLETE database installation and configuration steps",
-            "Install PostgreSQL 15+ locally or use Docker",
-            "Create database and user with proper permissions",
-            "Configure connection strings and environment variables",
-            "Include ALL database setup requirements..."
-          ],
-          "deploymentRequirements": [
-            "COMPLETE production deployment requirements",
-            "Docker container with multi-stage build",
-            "CI/CD pipeline with automated testing and deployment",
-            "Environment variable management and secrets",
-            "SSL certificates and domain configuration",
-            "Include ALL deployment considerations..."
-          ]
-        },
+    "totalEstimatedHours": "Sum of task hours",
+    "skillLevel": "beginner/intermediate/advanced",
+    "architecture": {
+      "databaseSchema": "Database design with tables, relationships, and indexes",
+      "apiEndpoints": "REST API endpoints with HTTP methods and responses",
+      "componentHierarchy": "React component structure and data flow",
+      "stateManagement": "State management approach and patterns",
+      "authenticationFlow": "Authentication and authorization implementation"
+    },
+    "environment": {
+      "technologies": ["React 18+", "Next.js 14+", "TypeScript", "Tailwind CSS", "PostgreSQL"],
+      "dependencies": ["react", "next", "typescript", "prisma", "zod"],
+      "environmentVariables": ["DATABASE_URL", "JWT_SECRET", "API_BASE_URL"],
+      "setupCommands": ["npm install", "npx prisma generate", "npm run dev"]
+    },
     "tasks": [
       {
-            "id": "dev-task-1",
-            "title": "EXTREMELY specific task title describing exact deliverable",
-            "description": "COMPREHENSIVE description (200+ words) of exactly what needs to be implemented, including all sub-components, functionality, edge cases, and integration requirements",
-            "type": "database/backend/frontend/testing/integration/deployment/documentation",
-            "complexity": "simple/moderate/complex",
-            "priority": "critical/high/medium/low",
-            "estimatedHours": "Realistic hour estimate (e.g., '8 hours')",
-            "prerequisites": [
-              "SPECIFIC dependencies and prior tasks that must be completed",
-              "Database server installed and configured",
-              "Development environment set up with all dependencies",
-              "Include ALL prerequisites..."
-            ],
-            "technicalSpecs": {
-              "files": [
-                "EXACT file paths with COMPLETE file content descriptions",
-                "src/lib/database.ts - Database connection utilities with error handling",
-                "prisma/schema.prisma - Complete database schema with all models",
-                "Include ALL files with detailed descriptions..."
-              ],
-              "components": [
-                "ALL components/modules with COMPLETE specifications",
-                "Database connection manager with retry logic",
-                "Model validation schemas with Zod",
-                "Include ALL components with full specs..."
-              ],
-              "apis": [
-                "COMPLETE API endpoint specifications with full examples",
-                "GET /api/items - List items with pagination, filtering, sorting",
-                "POST /api/items - Create new item with validation",
-                "Include ALL endpoints with request/response examples..."
-              ],
-              "database": [
-                "EXACT database changes with full DDL statements",
-                "CREATE TABLE items (id UUID PRIMARY KEY, title VARCHAR(255) NOT NULL, ...)",
-                "CREATE INDEX idx_items_user_id ON items(user_id)",
-                "Include ALL database modifications..."
-              ],
-              "libraries": [
-                "COMPLETE external dependencies with installation commands",
-                "npm install prisma @prisma/client zod bcrypt jsonwebtoken",
-                "npm install --save-dev @types/bcrypt @types/jsonwebtoken",
-                "Include ALL library requirements..."
-              ],
-              "configurations": [
-                "ALL configuration files with COMPLETE content",
-                "Environment variable configurations",
-                "Database connection settings",
-                "Include ALL configuration requirements..."
-              ]
-            },
-            "detailedImplementation": {
-              "step1": "EXTREMELY detailed first step with exact commands, code examples, and explanations",
-              "step2": "Second step with COMPLETE implementation details, code snippets, and configuration",
-              "step3": "Continue with ALL necessary steps including error handling and edge cases",
-              "codeExamples": [
-                "COMPLETE, working code snippets with full context",
-                "Example: Full React component with TypeScript interfaces",
-                "Example: Complete API endpoint with validation and error handling",
-                "Include ALL code examples needed..."
-              ],
-              "fileContents": [
-                "EXACT file contents where applicable",
-                "Complete Prisma schema file",
-                "Full React component implementation",
-                "Include ALL file contents..."
-              ],
-              "commands": [
-                "ALL terminal commands needed with explanations",
-                "npx prisma migrate dev --name init",
-                "npm run test -- --coverage",
-                "Include ALL commands with context..."
-              ],
-              "configurations": [
-                "COMPLETE configuration file contents",
-                "Full environment variable setup",
-                "Complete Docker configuration",
-                "Include ALL configuration details..."
-              ]
-            },
-            "testingProcedures": {
-              "unitTests": [
-                "SPECIFIC unit tests with COMPLETE code examples",
-                "Test database connection and error handling",
-                "Test model validation with edge cases",
-                "Include ALL unit tests with full implementations..."
-              ],
-              "integrationTests": [
-                "COMPLETE integration test scenarios with code",
-                "Test API endpoints with various inputs",
-                "Test database operations with real data",
-                "Include ALL integration tests..."
-              ],
-              "e2eTests": [
-                "FULL end-to-end test cases with automation code",
-                "Test complete user workflows",
-                "Test error scenarios and recovery",
-                "Include ALL e2e tests..."
-              ],
-              "manualTesting": [
-                "DETAILED manual testing procedures with checklists",
-                "User interface testing across devices",
-                "Performance testing under load",
-                "Include ALL manual testing steps..."
-              ],
-              "performanceTesting": [
-                "SPECIFIC performance testing requirements with tools",
-                "Load testing with specific metrics",
-                "Memory usage and optimization testing",
-                "Include ALL performance testing..."
-              ]
-            },
-            "acceptanceCriteria": [
-              "EXTREMELY specific, measurable completion criteria",
-              "All database tables created with proper relationships",
-              "All API endpoints return correct HTTP status codes",
-              "All forms validate input correctly",
-              "Include ALL acceptance criteria..."
-            ],
-            "validationSteps": [
-              "DETAILED step-by-step validation procedures",
-              "Run database migrations and verify schema",
-              "Test all API endpoints with Postman/Insomnia",
-              "Verify all components render without errors",
-              "Include ALL validation steps..."
-            ],
-            "troubleshooting": [
-              "COMPREHENSIVE common issues with specific solutions",
-              "Database connection issues: Check credentials and network",
-              "Build errors: Verify all dependencies are installed",
-              "Performance issues: Check database indexes and queries",
-              "Include ALL troubleshooting scenarios..."
-            ],
-            "documentation": [
-              "EXACT documentation to create with templates and examples",
-              "API documentation with OpenAPI/Swagger specs",
-              "Component usage guide with props",
-              "Database schema documentation",
-              "Include ALL documentation requirements..."
-            ]
+        "id": "dev-task-1",
+        "title": "Database Schema Design and Setup",
+        "description": "Design and implement complete database schema with tables, relationships, indexes, and constraints. Set up migrations and seed data.",
+        "type": "database",
+        "complexity": "moderate",
+        "priority": "critical",
+        "estimatedHours": "8 hours",
+        "prerequisites": ["Database server installed", "Prisma setup"],
+        "implementation": "1. Design schema 2. Create Prisma models 3. Generate migrations 4. Set up seed data 5. Test operations",
+        "acceptanceCriteria": ["All tables created", "Relationships working", "Seed data loads", "Queries perform well"],
+        "validationSteps": ["Run migrations", "Test CRUD operations", "Verify relationships"]
+      },
+      {
+        "id": "dev-task-2", 
+        "title": "Backend API Development",
+        "description": "Develop REST API with CRUD operations, authentication, validation, and error handling.",
+        "type": "backend",
+        "complexity": "complex", 
+        "priority": "critical",
+        "estimatedHours": "12 hours",
+        "prerequisites": ["Database schema completed"],
+        "implementation": "1. Create API routes 2. Add authentication 3. Implement validation 4. Add error handling 5. Write tests",
+        "acceptanceCriteria": ["All endpoints working", "Authentication secure", "Validation working", "Error handling complete"],
+        "validationSteps": ["Test all endpoints", "Verify auth", "Check error responses"]
+      },
+      {
+        "id": "dev-task-3",
+        "title": "Frontend Component Development", 
+        "description": "Create React components with TypeScript, responsive design, forms, and user interactions.",
+        "type": "frontend",
+        "complexity": "complex",
+        "priority": "high", 
+        "estimatedHours": "14 hours",
+        "prerequisites": ["API endpoints available"],
+        "implementation": "1. Create components 2. Add forms 3. Implement responsive design 4. Add interactions 5. Test UI",
+        "acceptanceCriteria": ["Components render correctly", "Forms work", "Responsive design", "Interactions smooth"],
+        "validationSteps": ["Test rendering", "Verify forms", "Check responsiveness"]
       }
     ]
   },
   "aiPlan": {
-        "totalEstimatedHours": "Sum of all AI task hours (e.g., '35 hours')",
-        "approach": "end-to-end",
+    "totalEstimatedHours": "24 hours",
+    "approach": "end-to-end",
     "tasks": [
       {
-            "id": "ai-task-1",
-            "title": "COMPREHENSIVE AI task title with specific deliverables",
-            "description": "COMPLETE description (300+ words) of what the AI should implement, including all components, features, testing, and deployment considerations",
-            "type": "full-stack/frontend/backend/testing/integration",
-            "complexity": "simple/moderate/complex",
-            "priority": "critical/high/medium/low", 
-            "estimatedHours": "Time estimate for AI implementation (e.g., '15 hours')",
-            "aiPrompt": "ULTRA-COMPREHENSIVE AI PROMPT with COMPLETE implementation details, code examples, file structures, testing requirements, and deployment configurations. This prompt should be copy-pasteable and result in a fully working, production-ready implementation.",
-            "expectedOutputs": {
-              "files": [
-                "COMPREHENSIVE list of ALL files with detailed descriptions",
-                "Complete database schema and migration files",
-                "Full API implementation with all endpoints",
-                "Complete React component library with TypeScript",
-                "Comprehensive testing suite with full coverage",
-                "Include ALL expected outputs..."
-              ],
-              "components": [
-                "ALL React components with complete functionality",
-                "Main container component with state management",
-                "Form components with validation and submission",
-                "List components with pagination and filtering",
-                "Include ALL component specifications..."
-              ],
-              "features": [
-                "COMPLETE list of implemented features and capabilities",
-                "Full CRUD operations with validation",
-                "Real-time data synchronization",
-                "Responsive design across all devices",
-                "Include ALL feature implementations..."
-              ],
-              "tests": [
-                "ALL test files and test cases implemented",
-                "Unit tests for all components and functions",
-    🏗️ REQUIRED JSON STRUCTURE WITH COMPLETE DETAILS:`;
+        "id": "ai-task-1",
+        "title": "Complete Full-Stack Implementation",
+        "description": "Generate complete implementation with database, API, frontend, and testing.",
+        "type": "full-stack",
+        "complexity": "complex",
+        "priority": "critical",
+        "estimatedHours": "12 hours",
+        "aiPrompt": "Create a complete, production-ready implementation of '${feature}'. Include: 1) Complete Prisma schema with relationships 2) Full REST API with authentication 3) React components with TypeScript 4) State management with hooks 5) Responsive design with Tailwind 6) Form validation with Zod 7) Error handling 8) Testing setup. Provide working code for all files.",
+        "expectedOutputs": {
+          "files": ["Database schema", "API endpoints", "React components", "Tests"],
+          "components": ["Main container", "Forms", "Lists", "Modals"],
+          "features": ["CRUD operations", "Authentication", "Validation", "Responsive design"]
+        }
+      }
+    ]
+  }
+}`;
 
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: prompt }] }],
       generationConfig: {
         temperature: 0.1, // Very low temperature for maximum consistency and detail
-        maxOutputTokens: 16384, // Reduced from 32768 to prevent truncation issues
+        maxOutputTokens: 8192, // Reduced from 16384 to prevent truncation issues
       }
     });
     
