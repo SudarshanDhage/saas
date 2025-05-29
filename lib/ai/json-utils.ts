@@ -3,256 +3,374 @@
  */
 
 /**
- * Attempts to repair malformed JSON from AI responses
+ * Enhanced JSON repair with step-by-step logging and more robust error handling
  */
 export function repairJson(jsonString: string): string {
-  console.log("Original JSON string excerpt:", jsonString.substring(0, 200) + "...");
+  console.log("=== JSON REPAIR START ===");
+  console.log("Original JSON excerpt:", jsonString.substring(0, 300) + "...");
+  console.log("Original JSON length:", jsonString.length);
   
   try {
     // Try parsing directly first
     JSON.parse(jsonString);
-    return jsonString; // If it parses, it's valid JSON
+    console.log("JSON is already valid, no repair needed");
+    return jsonString;
   } catch (error: any) {
-    console.log("JSON Repair: Attempting to repair malformed JSON");
-    
-    // Extract error information to target the specific issue
-    const errorMessage = error.message || '';
-    console.log("JSON parse error:", errorMessage);
-    
-    const positionMatch = errorMessage.match(/position\s+(\d+)/);
-    const lineColMatch = errorMessage.match(/line\s+(\d+)\s+column\s+(\d+)/);
-    
-    // If we found position or line/column information
-    if (positionMatch || lineColMatch) {
-      let position = -1;
-      
-      if (positionMatch) {
-        position = parseInt(positionMatch[1], 10);
-      } else if (lineColMatch) {
-        // Calculate approximate position from line and column
-        const line = parseInt(lineColMatch[1], 10);
-        const column = parseInt(lineColMatch[2], 10);
-        const lines = jsonString.split('\n');
-        position = lines.slice(0, line - 1).join('\n').length + column;
-      }
-      
-      // Look at the error location
-      if (position >= 0 && position < jsonString.length) {
-        const contextBefore = jsonString.slice(Math.max(0, position - 30), position);
-        const contextAfter = jsonString.slice(position, Math.min(jsonString.length, position + 30));
-        console.log(`Error at position ${position}:`);
-        console.log(`Context before: "${contextBefore}"`);
-        console.log(`Context after: "${contextAfter}"`);
-        
-        // Specific fixes based on error types
-        if (errorMessage.includes("Expected ',' or '}'")) {
-          // This can happen with trailing properties without commas
-          // Try inserting a comma
-          jsonString = jsonString.slice(0, position) + ',' + jsonString.slice(position);
-        } else if (errorMessage.includes("Expected ':' after property name")) {
-          // Missing colon after property name
-          jsonString = jsonString.slice(0, position) + ':' + jsonString.slice(position);
-        } else if (errorMessage.includes("Unexpected token")) {
-          // Try to remove or replace the unexpected token
-          // First check if it's a single quote - replace with double quote
-          if (jsonString[position] === "'") {
-            jsonString = jsonString.slice(0, position) + '"' + jsonString.slice(position + 1);
-          } else {
-            // Otherwise remove the problematic character
-            jsonString = jsonString.slice(0, position) + jsonString.slice(position + 1);
-          }
-        }
-      }
-    }
-    
-    // Try again with a more aggressive approach
-    try {
-      // Ultra-aggressive cleaning:
-      
-      // 1. Extract just the beginning of the string to the end - sometimes there's junk at the start
-      const jsonStart = jsonString.indexOf('{');
-      const jsonEnd = jsonString.lastIndexOf('}');
-      if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
-        jsonString = jsonString.substring(jsonStart, jsonEnd + 1);
-      }
-      
-      // 2. Try to parse it brute-force by fixing common JSON syntax issues
-      jsonString = jsonString
-        // Fix unquoted property names
-        .replace(/([{,]\s*)([a-zA-Z0-9_$]+)(\s*:)/g, '$1"$2"$3')
-        // Fix trailing commas
-        .replace(/,\s*([}\]])/g, '$1')
-        // Fix missing commas between objects
-        .replace(/}(\s*){/g, '},\n$1{')
-        // Fix missing commas between array items
-        .replace(/](\s*)\[/g, '],\n$1[')
-        // Replace single quotes with double quotes around property names
-        .replace(/'([^']+)'(\s*:)/g, '"$1"$2')
-        // Replace single quotes with double quotes for string values
-        .replace(/:\s*'([^']*)'/g, ': "$1"')
-        // Fix newlines in string values
-        .replace(/"\s*\n\s*([^"]*)"/g, '" $1"')
-        // Fix double commas
-        .replace(/,,/g, ',')
-        // Fix space after property name
-        .replace(/"\s+:/g, '":')
-        // Fix space before property name
-        .replace(/\{\s+"/g, '{"')
-        // Fix space after colon
-        .replace(/:\s+"/g, ':"')
-        // Handle unescaped quotes within strings
-        .replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, (match) => {
-          return match.replace(/(?<!\\)"/g, '\\"');
-        });
-      
-      // 3. Try using a JSON5 style relaxed parsing by implementing our own basic parser
-      // First, balance the brackets and braces
-      const openBraces = (jsonString.match(/\{/g) || []).length;
-      const closeBraces = (jsonString.match(/\}/g) || []).length;
-      if (openBraces > closeBraces) {
-        jsonString += '}'.repeat(openBraces - closeBraces);
-      }
-      
-      const openBrackets = (jsonString.match(/\[/g) || []).length;
-      const closeBrackets = (jsonString.match(/\]/g) || []).length;
-      if (openBrackets > closeBrackets) {
-        jsonString += ']'.repeat(openBrackets - closeBrackets);
-      }
-      
-      // Log the cleaned string
-      console.log("After aggressive cleaning:", jsonString.substring(0, 200) + "...");
-      
-      // Try to parse it
-      try {
-        JSON.parse(jsonString);
-        console.log("JSON successfully repaired after aggressive cleaning!");
-        return jsonString;
-      } catch (innerError) {
-        console.error("Failed parsing after aggressive cleaning:", innerError);
-        
-        // Last resort: rebuild the JSON object structure minimally
-        try {
-          // Parse it as a JavaScript object using eval - NOTE: This is normally dangerous
-          // but in this controlled environment for text processing it's an option
-          // Create a minimalist valid version
-          console.log("Attempting minimal valid JSON reconstruction");
-          
-          // We know that we're looking for a structure with developerSprintPlan and aiSprintPlan
-          // So let's start with a basic structure
-          return `{
-            "developerSprintPlan": {
-              "sprints": [
-                {
-                  "name": "Sprint 1",
-                  "duration": "2 weeks",
-                  "focus": "Setup and initial implementation",
-                  "tasks": [
-                    {
-                      "id": "task1",
-                      "title": "Basic setup",
-                      "description": "Initial project setup",
-                      "implementation": "Setup project structure",
-                      "type": "setup",
-                      "priority": "high",
-                      "estimatedHours": 4,
-                      "dependencies": [],
-                      "acceptanceCriteria": ["Project runs locally"]
-                    }
-                  ]
-                }
-              ]
-            },
-            "aiSprintPlan": {
-              "sprints": [
-                {
-                  "name": "Sprint 1",
-                  "duration": "2 weeks",
-                  "focus": "AI-assisted implementation",
-                  "tasks": [
-                    {
-                      "id": "task1",
-                      "title": "AI setup",
-                      "description": "Setup with AI assistance",
-                      "implementation": "Use AI tools for setup",
-                      "type": "setup",
-                      "priority": "high",
-                      "estimatedHours": 2,
-                      "dependencies": [],
-                      "aiPrompt": "Set up the project structure"
-                    }
-                  ]
-                }
-              ]
-            }
-          }`;
-        } catch (finalError) {
-          console.error("Last resort reconstruction failed:", finalError);
-          // Return a valid minimal JSON that won't crash the application
-          return `{
-            "developerSprintPlan": {"sprints": []},
-            "aiSprintPlan": {"sprints": []}
-          }`;
-        }
-      }
-    } catch (aggressiveError) {
-      console.error("Error during aggressive JSON repair:", aggressiveError);
-      // Return a valid minimal JSON that won't crash the application
-      return `{
-        "developerSprintPlan": {"sprints": []},
-        "aiSprintPlan": {"sprints": []}
-      }`;
-    }
+    console.log("JSON repair needed. Error:", error.message);
   }
+  
+  // Step 1: Extract clean JSON boundaries
+  let cleaned = extractJsonBoundaries(jsonString);
+  console.log("After boundary extraction:", cleaned.substring(0, 200) + "...");
+  
+  try {
+    JSON.parse(cleaned);
+    console.log("JSON valid after boundary extraction");
+    return cleaned;
+  } catch (error: any) {
+    console.log("Still invalid after boundary extraction:", error.message);
+  }
+  
+  // Step 2: Apply comprehensive repairs
+  cleaned = applyComprehensiveRepairs(cleaned);
+  console.log("After comprehensive repairs:", cleaned.substring(0, 200) + "...");
+  
+  try {
+    JSON.parse(cleaned);
+    console.log("JSON valid after comprehensive repairs");
+    return cleaned;
+  } catch (error: any) {
+    console.log("Still invalid after comprehensive repairs:", error.message);
+  }
+  
+  // Step 3: Character-by-character repair
+  cleaned = characterByCharacterRepair(cleaned);
+  console.log("After character-by-character repair:", cleaned.substring(0, 200) + "...");
+  
+  try {
+    JSON.parse(cleaned);
+    console.log("JSON valid after character-by-character repair");
+    return cleaned;
+  } catch (error: any) {
+    console.log("Still invalid after character repair:", error.message);
+  }
+  
+  // Step 4: Smart reconstruction
+  const reconstructed = smartReconstruction(cleaned);
+  console.log("After smart reconstruction:", reconstructed.substring(0, 200) + "...");
+  
+  try {
+    JSON.parse(reconstructed);
+    console.log("JSON valid after smart reconstruction");
+    return reconstructed;
+  } catch (error: any) {
+    console.log("Still invalid after smart reconstruction:", error.message);
+  }
+  
+  // Step 5: Last resort fallback
+  console.log("All repair attempts failed, using fallback structure");
+  return getFallbackStructure();
 }
 
 /**
- * Extract and clean JSON from text that might contain markdown formatting or other text
+ * Extract JSON from boundaries and remove markdown/extra content
  */
-export function extractJsonFromText(text: string): string {
-  let jsonString = text;
+function extractJsonBoundaries(text: string): string {
+  let jsonString = text.trim();
   
-  // Find the first occurrence of '{' and the last occurrence of '}'
+  // Remove markdown code blocks
+  const markdownMatch = text.match(/```(?:json)?\s*(\{[\s\S]*?\})\s*```/);
+  if (markdownMatch && markdownMatch[1]) {
+    jsonString = markdownMatch[1].trim();
+  }
+  
+  // Find the first '{' and last '}'
   const firstBrace = jsonString.indexOf('{');
   const lastBrace = jsonString.lastIndexOf('}');
   
   if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
-    // Extract just the JSON part
     jsonString = jsonString.substring(firstBrace, lastBrace + 1);
   }
   
-  // Check if the response is wrapped in markdown code blocks
-  const markdownJsonRegex = /```(?:json)?\s*(\{[\s\S]*?\})\s*```/;
-  const markdownMatch = text.match(markdownJsonRegex);
-  if (markdownMatch && markdownMatch[1]) {
-    jsonString = markdownMatch[1];
-  }
-  
-  // Extensive cleaning of the JSON string
-  
-  // 1. Fix trailing commas in arrays and objects
-  jsonString = jsonString.replace(/,\s*([}\]])/g, '$1');
-  
-  // 2. Fix missing commas between objects in arrays
-  jsonString = jsonString.replace(/}\s*{/g, '},{');
-  
-  // 3. Fix property names not in quotes (only properties followed by :)
-  jsonString = jsonString.replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":');
-  
-  // 4. Fix invalid escape sequences
-  jsonString = jsonString.replace(/\\x([0-9A-F]{2})/g, '\\u00$1');
-  
-  // 5. Remove BOM and other invisible characters
-  jsonString = jsonString.replace(/^\uFEFF/, '');
-  
-  // 6. Remove comments
-  jsonString = jsonString.replace(/\/\*[\s\S]*?\*\/|\/\/.*/g, '');
-  
-  // 7. Replace single quotes with double quotes (careful with already escaped quotes)
-  jsonString = jsonString.replace(/(\w+)'/g, '$1\\\'');
-  jsonString = jsonString.replace(/'(\w+)/g, '\\\'$1');
-  
-  // 8. Fix missing double quotes in property values
-  jsonString = jsonString.replace(/:\s*'([^']*)'/g, ': "$1"');
+  // Remove any leading/trailing non-JSON content
+  jsonString = jsonString.replace(/^[^{]*/, '').replace(/[^}]*$/, '');
   
   return jsonString;
+}
+
+/**
+ * Apply comprehensive JSON repairs
+ */
+function applyComprehensiveRepairs(jsonString: string): string {
+  let repaired = jsonString;
+  
+  // Fix property names (ensure they're quoted)
+  repaired = repaired.replace(/([{,]\s*)([a-zA-Z0-9_$]+)(\s*:)/g, '$1"$2"$3');
+  
+  // Fix single quotes to double quotes for property names
+  repaired = repaired.replace(/([{,]\s*)'([^']+)'(\s*:)/g, '$1"$2"$3');
+  
+  // Fix single quotes to double quotes for string values
+  repaired = repaired.replace(/:\s*'([^']*)'/g, ': "$1"');
+  
+  // Fix trailing commas
+  repaired = repaired.replace(/,\s*([}\]])/g, '$1');
+  
+  // Fix missing commas between objects
+  repaired = repaired.replace(/}(\s*){/g, '},\n$1{');
+  
+  // Fix missing commas between array items
+  repaired = repaired.replace(/](\s*)\[/g, '],\n$1[');
+  
+  // Fix missing commas between object properties (most common issue)
+  repaired = repaired.replace(/"(\s*)"\s*([a-zA-Z0-9_$]+)\s*:/g, '"$1","$2":');
+  repaired = repaired.replace(/([^,\{\[]\s*)"\s*([a-zA-Z0-9_$]+)\s*:/g, '$1,"$2":');
+  
+  // Fix double commas
+  repaired = repaired.replace(/,,+/g, ',');
+  
+  // Fix newlines in string values
+  repaired = repaired.replace(/"\s*\n\s*([^"]*)\s*\n\s*"/g, '"$1"');
+  
+  // Remove comments
+  repaired = repaired.replace(/\/\*[\s\S]*?\*\//g, '');
+  repaired = repaired.replace(/\/\/.*$/gm, '');
+  
+  // Fix unescaped quotes in strings
+  repaired = repaired.replace(/"([^"\\]*(?:\\.[^"\\]*)*?)\\?"([^"\\]*(?:\\.[^"\\]*)*?)"/g, '"$1\\"$2"');
+  
+  // Normalize whitespace
+  repaired = repaired.replace(/\s+/g, ' ');
+  
+  return repaired;
+}
+
+/**
+ * Character-by-character repair for specific syntax errors
+ */
+function characterByCharacterRepair(jsonString: string): string {
+  let repaired = jsonString;
+  let attempts = 0;
+  const maxAttempts = 10;
+  
+  while (attempts < maxAttempts) {
+    try {
+      JSON.parse(repaired);
+      break; // Success!
+    } catch (error: any) {
+      attempts++;
+      
+      const errorMessage = error.message || '';
+      console.log(`Repair attempt ${attempts}: ${errorMessage}`);
+      
+      // Extract position information
+      const positionMatch = errorMessage.match(/position\s+(\d+)/);
+      const lineColMatch = errorMessage.match(/line\s+(\d+)\s+column\s+(\d+)/);
+      
+      let position = -1;
+      if (positionMatch) {
+        position = parseInt(positionMatch[1], 10);
+      } else if (lineColMatch) {
+        const line = parseInt(lineColMatch[1], 10);
+        const column = parseInt(lineColMatch[2], 10);
+        const lines = repaired.split('\n');
+        position = lines.slice(0, line - 1).join('\n').length + column - 1;
+      }
+      
+      if (position >= 0 && position < repaired.length) {
+        const char = repaired[position];
+        const before = repaired.slice(Math.max(0, position - 20), position);
+        const after = repaired.slice(position, Math.min(repaired.length, position + 20));
+        
+        console.log(`Error at position ${position}, character: '${char}'`);
+        console.log(`Context: "${before}[${char}]${after}"`);
+        
+        if (errorMessage.includes("Expected ',' or '}'")) {
+          // Insert comma before the problematic position
+          repaired = repaired.slice(0, position) + ',' + repaired.slice(position);
+        } else if (errorMessage.includes("Expected ':' after property name")) {
+          // Insert colon
+          repaired = repaired.slice(0, position) + ':' + repaired.slice(position);
+        } else if (errorMessage.includes("Unexpected token")) {
+          if (char === "'") {
+            // Replace single quote with double quote
+            repaired = repaired.slice(0, position) + '"' + repaired.slice(position + 1);
+          } else if (char === '\n' || char === '\r') {
+            // Remove newline
+            repaired = repaired.slice(0, position) + ' ' + repaired.slice(position + 1);
+          } else {
+            // Remove the problematic character
+            repaired = repaired.slice(0, position) + repaired.slice(position + 1);
+          }
+        } else if (errorMessage.includes("Unexpected end of JSON")) {
+          // Add missing closing braces/brackets
+          repaired = balanceBrackets(repaired);
+          break;
+        } else {
+          // Generic fix: try removing the character
+          repaired = repaired.slice(0, position) + repaired.slice(position + 1);
+        }
+      } else {
+        // Can't find position, try generic fixes
+        repaired = balanceBrackets(repaired);
+        break;
+      }
+    }
+  }
+  
+  return repaired;
+}
+
+/**
+ * Balance brackets and braces
+ */
+function balanceBrackets(jsonString: string): string {
+  let balanced = jsonString;
+  
+  const openBraces = (balanced.match(/\{/g) || []).length;
+  const closeBraces = (balanced.match(/\}/g) || []).length;
+  if (openBraces > closeBraces) {
+    balanced += '}'.repeat(openBraces - closeBraces);
+  }
+  
+  const openBrackets = (balanced.match(/\[/g) || []).length;
+  const closeBrackets = (balanced.match(/\]/g) || []).length;
+  if (openBrackets > closeBrackets) {
+    balanced += ']'.repeat(openBrackets - closeBrackets);
+  }
+  
+  return balanced;
+}
+
+/**
+ * Smart reconstruction of JSON structure
+ */
+function smartReconstruction(jsonString: string): string {
+  console.log("Attempting smart reconstruction...");
+  
+  try {
+    // Try to extract key-value pairs and rebuild the structure
+    const patterns = {
+      title: /"title"\s*:\s*"([^"]*)"/,
+      description: /"description"\s*:\s*"([^"]*)"/,
+      coreFeatures: /"coreFeatures"\s*:\s*(\[[^\]]*\])/,
+      suggestedFeatures: /"suggestedFeatures"\s*:\s*(\[[^\]]*\])/
+    };
+    
+    const extracted: any = {};
+    
+    for (const [key, pattern] of Object.entries(patterns)) {
+      const match = jsonString.match(pattern);
+      if (match) {
+        if (key === 'coreFeatures' || key === 'suggestedFeatures') {
+          try {
+            extracted[key] = JSON.parse(match[1]);
+          } catch {
+            extracted[key] = [];
+          }
+        } else {
+          extracted[key] = match[1];
+        }
+      }
+    }
+    
+    // Build a valid structure
+    const reconstructed = {
+      title: extracted.title || "Generated Project",
+      description: extracted.description || "A project generated from your idea",
+      coreFeatures: extracted.coreFeatures || [
+        {
+          id: "core1",
+          name: "Basic Functionality",
+          description: "Core project functionality"
+        }
+      ],
+      suggestedFeatures: extracted.suggestedFeatures || [
+        {
+          id: "suggested1",
+          name: "Enhanced Features",
+          description: "Additional project enhancements"
+        }
+      ]
+    };
+    
+    return JSON.stringify(reconstructed, null, 2);
+  } catch (error) {
+    console.log("Smart reconstruction failed:", error);
+    return getFallbackStructure();
+  }
+}
+
+/**
+ * Get a valid fallback JSON structure
+ */
+function getFallbackStructure(): string {
+  return JSON.stringify({
+    title: "Generated Project",
+    description: "A comprehensive project structure generated from your idea",
+    coreFeatures: [
+      {
+        id: "user_management",
+        name: "User Management",
+        description: "Complete user registration, authentication, and profile management"
+      },
+      {
+        id: "core_functionality",
+        name: "Core Business Logic",
+        description: "Primary functionality that solves the main problem"
+      },
+      {
+        id: "data_management",
+        name: "Data Management",
+        description: "Secure data storage and management systems"
+      },
+      {
+        id: "user_interface",
+        name: "User Interface",
+        description: "Intuitive and responsive user interface design"
+      }
+    ],
+    suggestedFeatures: [
+      {
+        id: "admin_dashboard",
+        name: "Admin Dashboard",
+        description: "Administrative interface for system management"
+      },
+      {
+        id: "analytics",
+        name: "Analytics & Reporting",
+        description: "Data analytics and reporting capabilities"
+      },
+      {
+        id: "notifications",
+        name: "Notification System",
+        description: "Multi-channel notification system"
+      },
+      {
+        id: "mobile_support",
+        name: "Mobile Support",
+        description: "Mobile-responsive design and functionality"
+      },
+      {
+        id: "api_integration",
+        name: "API Integration",
+        description: "Integration with external services and APIs"
+      }
+    ]
+  }, null, 2);
+}
+
+/**
+ * Enhanced JSON extraction with better error handling
+ */
+export function extractJsonFromText(text: string): string {
+  console.log("=== JSON EXTRACTION START ===");
+  console.log("Input text length:", text.length);
+  console.log("Input text excerpt:", text.substring(0, 300) + "...");
+  
+  let extracted = extractJsonBoundaries(text);
+  console.log("Extracted JSON:", extracted.substring(0, 300) + "...");
+  
+  // Apply the repair function
+  return repairJson(extracted);
 } 
